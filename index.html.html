@@ -1,0 +1,1423 @@
+<title>Ureteroscope Break-Even</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: inputs on the left in three numbered steps, a sticky verdict panel on the right; stacks with the verdict first on phones */
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --ink: #16212a;
+  --muted: #5b6b77;
+  --line: #d9e1e6;
+  --su: #b5600c;        /* single-use */
+  --su-tint: #fbeedf;
+  --ru: #1f5f8b;        /* reusable */
+  --ru-tint: #e3eef6;
+  --accent: #0e6b6b;
+  --focus: #0e6b6b;
+  --seg1: #1f5f8b; --seg2: #4b8bb5; --seg3: #8bb6d1; --seg4: #b5600c; --seg5: #d9944d; --seg6: #7a8a95; --seg7: #a9b6bf;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f161b; --surface: #172129; --ink: #e6edf1; --muted: #93a4b0; --line: #2a3843;
+    --su: #f0a056; --su-tint: #3a2a1a; --ru: #6fb0e0; --ru-tint: #182c3b; --accent: #4fc2c0; --focus: #4fc2c0;
+    --seg1: #6fb0e0; --seg2: #4a86b0; --seg3: #2f5f80; --seg4: #f0a056; --seg5: #b8743a; --seg6: #8a9aa5; --seg7: #5a6a75;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f161b; --surface: #172129; --ink: #e6edf1; --muted: #93a4b0; --line: #2a3843;
+  --su: #f0a056; --su-tint: #3a2a1a; --ru: #6fb0e0; --ru-tint: #182c3b; --accent: #4fc2c0; --focus: #4fc2c0;
+  --seg1: #6fb0e0; --seg2: #4a86b0; --seg3: #2f5f80; --seg4: #f0a056; --seg5: #b8743a; --seg6: #8a9aa5; --seg7: #5a6a75;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; }
+header { display: grid; gap: 6px; margin-bottom: 22px; max-width: 760px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); max-width: 66ch; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.steps { display: grid; gap: 18px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 20px; min-width: 0; }
+.card h2 { font-family: var(--display); font-weight: 600; font-size: 19px; margin: 0 0 4px; display: flex; gap: 10px; align-items: baseline; }
+.card h2 .n { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500; }
+.card .lede { margin: 0 0 14px; color: var(--muted); font-size: 14px; max-width: 70ch; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 16px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 500; min-height: 3em; display: flex; align-items: flex-end; }
+.field.wide { grid-column: 1 / -1; }
+.field.wide label { min-height: 0; }
+.field .hint { font-size: 12px; color: var(--muted); }
+.unit-input { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); overflow: hidden; }
+.unit-input:focus-within { outline: 2px solid var(--focus); outline-offset: 1px; }
+.unit-input input, select { font-family: var(--mono); font-size: 14px; color: var(--ink); background: transparent; border: 0; padding: 8px 10px; width: 100%; min-width: 0; font-variant-numeric: tabular-nums; }
+.unit-input input:focus, select:focus { outline: none; }
+.unit-input span { font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 0 10px 0 2px; white-space: nowrap; }
+select { border: 1px solid var(--line); border-radius: 7px; background: var(--bg); font-family: var(--body); }
+select:disabled { opacity: .55; cursor: not-allowed; }
+select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.sub { font-family: var(--display); font-size: 14px; font-weight: 600; letter-spacing: .02em; color: var(--muted); margin: 16px 0 8px; text-transform: uppercase; }
+.sub:first-of-type { margin-top: 4px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 14px; flex-wrap: wrap; }
+.seg button { font: 500 13px var(--body); padding: 7px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button:focus-visible, .chips button:focus-visible, .toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chips button { font: 12px var(--mono); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.chips button:hover { color: var(--ink); border-color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; max-width: 72ch; }
+.toggle-row { display: flex; gap: 10px; align-items: center; margin-top: 14px; font-size: 14px; }
+.toggle-row input { width: 16px; height: 16px; accent-color: var(--accent); }
+.results { display: grid; gap: 14px; min-width: 0; }
+.verdict { border-radius: 10px; padding: 18px; border: 1px solid var(--line); background: var(--surface); display: grid; gap: 10px; }
+.pill { justify-self: start; font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.15; letter-spacing: .04em; text-transform: uppercase; padding: 6px 16px; border-radius: 10px; }
+.pill.su { background: var(--su-tint); color: var(--su); }
+.pill.ru { background: var(--ru-tint); color: var(--ru); }
+.big { font-family: var(--display); font-size: 26px; font-weight: 600; line-height: 1.15; text-wrap: balance; }
+.verdict p { margin: 0; color: var(--muted); font-size: 14px; }
+.verdict p.percase, .final p.percase { font-size: 13.5px; margin-top: -4px; color: var(--ink); opacity: .8; }
+sup.ref { font-family: var(--mono); font-size: 10px; line-height: 0; margin-left: 1px; }
+sup.ref a { color: var(--accent); text-decoration: none; padding: 0 1px; border-radius: 3px; }
+sup.ref a:hover, sup.ref a:focus-visible { background: var(--ru-tint); outline: none; }
+sup.ref + sup.ref::before { content: ","; color: var(--muted); }
+.refpop { position: absolute; z-index: 20; max-width: min(340px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.14); padding: 10px 12px; font-size: 13px; line-height: 1.45; }
+.refpop a { color: var(--accent); font-weight: 500; display: inline-block; margin-top: 6px; }
+ol.refs { padding-left: 22px; margin: 10px 0 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+ol.refs a { color: var(--accent); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; color: var(--muted); }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 10px; }
+.chart h3 { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+.chart .cap { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.key .sw { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -2px; background: var(--muted); }
+.key .sw.light { opacity: .35; }
+.chart h4.minor { font-family: var(--display); font-size: 13px; font-weight: 600; margin: 14px 0 0; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.final { margin-top: 22px; display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.final p { margin: 0; color: var(--muted); font-size: 14px; max-width: 72ch; }
+.legend { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; margin-top: 8px; }
+.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.legend .val { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.or-toggle { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.or-toggle:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.legend .sub-item { color: var(--muted); font-size: 12px; }
+.legend span.sub-item:not(.val) { padding-left: 14px; }
+details.orparts { grid-column: 1 / -1; margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+details.orparts summary { cursor: pointer; font-weight: 500; font-size: 13.5px; }
+details.orparts summary .mono { font-family: var(--mono); color: var(--muted); margin-left: 6px; }
+details.orparts .fields { margin-top: 10px; }
+details.sources { margin-top: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+details.sources summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 16px; }
+details.sources ul { padding-left: 18px; margin: 10px 0 0; display: grid; gap: 6px; font-size: 13.5px; color: var(--muted); }
+details.sources a { color: var(--accent); }
+.refs-h { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 16px 0 0; }
+.formula { font-family: var(--mono); font-size: 12.5px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; margin-top: 10px; color: var(--ink); }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) { .bar-seg { transition: width .25s ease, x .25s ease; } }
+/* v9 additions: version stamp, toolbar, how-to, uncertainty, device view, export */
+.ver { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.ver a, .howto a, .foot a { color: var(--accent); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.toolbar .seg { margin-bottom: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: 500 13px var(--body); padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.sharebox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: grid; gap: 8px; font-size: 13px; color: var(--muted); }
+.sharebox .row { display: flex; gap: 8px; align-items: center; }
+.sharebox input, .sharebox textarea { flex: 1; min-width: 0; font: 12px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; }
+.sharebox textarea { width: 100%; min-height: 110px; resize: vertical; }
+.sharebox .msg { color: var(--accent); font-weight: 500; }
+details.howto { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+details.howto summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 17px; }
+details.howto ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; max-width: 80ch; }
+.example { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 14px; display: grid; gap: 8px; font-size: 14px; max-width: 86ch; }
+.example h3 { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 0; }
+.example p { margin: 0; }
+.example .actions { margin-top: 2px; }
+.card.unc { margin-top: 22px; }
+.unc-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; margin-top: 14px; }
+@media (max-width: 900px) { .unc-body { grid-template-columns: minmax(0, 1fr); } }
+table.rng, table.stages { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.rng th, table.rng td, table.stages th, table.stages td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.rng th, table.stages th { font-weight: 500; color: var(--muted); font-size: 12px; }
+table.rng td.cur, table.stages td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+table.rng td.cur { color: var(--muted); }
+table.rng input, table.stages input { width: 100%; min-width: 58px; font: 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font-variant-numeric: tabular-nums; }
+table.rng input:focus-visible, table.stages input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+table.rng td small { display: block; color: var(--muted); font-size: 11.5px; }
+table.rng tr.edited td:first-child::after { content: " (edited)"; color: var(--accent); font-size: 11.5px; }
+table.stages tfoot td { font-weight: 600; border-bottom: 0; }
+.mc-stats { grid-template-columns: 1fr 1fr; margin-bottom: 12px; }
+.panel-h { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+.panel-cap { font-size: 12.5px; color: var(--muted); margin: 0 0 10px; }
+#hist { width: 100%; height: auto; display: block; }
+.tornado { display: grid; gap: 7px; }
+.trow { display: grid; grid-template-columns: minmax(0, 12em) minmax(0, 1fr); gap: 10px; align-items: center; font-size: 12.5px; }
+.trow .tl small { display: block; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.tbar { position: relative; height: 22px; }
+.tbar .seg-lo, .tbar .seg-hi { position: absolute; top: 3px; height: 16px; }
+.tbar .seg-lo { background: var(--seg7); }
+.tbar .seg-hi { background: var(--accent); }
+.tbar .zero, .taxis .zero { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid var(--ink); }
+.tbar .base { position: absolute; top: -2px; bottom: -2px; width: 0; border-left: 1px dashed var(--muted); }
+.tbar .tv { position: absolute; top: 3px; font: 10.5px var(--mono); color: var(--muted); line-height: 16px; white-space: nowrap; }
+.taxis { position: relative; height: 34px; margin-left: calc(12em + 10px); font-size: 11px; color: var(--muted); }
+.taxis span { position: absolute; top: 2px; white-space: nowrap; font-family: var(--mono); }
+.taxis .dir { top: 18px; font-family: var(--body); }
+@media (max-width: 520px) { .trow { grid-template-columns: minmax(0, 1fr); gap: 2px; } .taxis { margin-left: 0; } }
+.inv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 14px; }
+@media (max-width: 760px) { .inv-grid { grid-template-columns: minmax(0, 1fr); } }
+.inv-grid h3 { font-family: var(--display); font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+.inv-grid h3.su { color: var(--su); } .inv-grid h3.ru { color: var(--ru); }
+.catdot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.inv-sum { font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.2; margin: 16px 0 4px; text-wrap: balance; }
+#invBar { width: 100%; max-width: 680px; height: auto; display: block; margin-top: 8px; }
+details.changelog { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+details.changelog summary { cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 16px; }
+details.changelog dl { margin: 10px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; font-size: 13.5px; }
+details.changelog dt { font-family: var(--mono); font-size: 12.5px; color: var(--ink); }
+details.changelog dd { margin: 0; color: var(--muted); }
+@media (max-width: 520px) { details.changelog dl { grid-template-columns: minmax(0, 1fr); } details.changelog dd { margin-bottom: 6px; } }
+@media (max-width: 520px) {
+  table.rng { table-layout: fixed; font-size: 12px; }
+  table.rng th:nth-child(1) { width: 38%; } table.rng th:nth-child(2), table.rng th:nth-child(4) { width: 23%; } table.rng th:nth-child(3) { width: 16%; }
+  table.rng th, table.rng td { padding: 4px 3px; }
+  table.rng input { min-width: 0; font-size: 12px; padding: 4px 4px; }
+}
+.foot { margin-top: 18px; font-size: 12.5px; color: var(--muted); }
+
+/* v10: verdict banner, three-step flow, advanced inputs, tipping points, source tags */
+.banner { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--muted); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; display: grid; gap: 8px; }
+.banner.su { border-left-color: var(--su); } .banner.ru { border-left-color: var(--ru); }
+.banner .pill { font-size: 15px; padding: 4px 12px; border-radius: 8px; }
+.pill.wait { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.banner .headline { font-family: var(--display); font-size: clamp(22px, 3vw, 29px); font-weight: 600; line-height: 1.2; margin: 0; text-wrap: balance; max-width: 40ch; }
+.banner .sub-line { margin: 0; font-size: 15px; color: var(--ink); max-width: 80ch; }
+.banner .sub-line.muted { color: var(--muted); font-size: 13.5px; }
+.banner .sub-line:empty { display: none; }
+details.advanced { border: 1px solid var(--accent); border-radius: 10px; padding: 0; background: var(--surface); }
+details.advanced > summary { list-style: none; padding: 14px 16px 14px 44px; position: relative; border-radius: 10px; }
+details.advanced > summary::-webkit-details-marker { display: none; }
+details.advanced > summary:hover { background: var(--bg); }
+details.advanced > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.adv-chev { position: absolute; left: 14px; top: 14px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); }
+.adv-chev::after { content: ""; position: absolute; left: 7px; top: 5px; width: 6px; height: 6px; border-right: 2px solid var(--surface); border-bottom: 2px solid var(--surface); transform: rotate(-45deg); transition: transform .15s; }
+details.advanced[open] .adv-chev::after { transform: rotate(45deg); left: 6px; top: 4px; }
+details.advanced[open] { padding-bottom: 14px; }
+details.advanced[open] > :not(summary) { margin-inline: 14px; }
+.adv-t .opt { font: 500 11px var(--body); text-transform: uppercase; letter-spacing: .05em; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px; }
+.adv-d { flex-basis: 100%; font-size: 13.5px; color: var(--muted); }
+.def { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.def:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+details.advanced[open] { display: grid; gap: 18px; }
+details.advanced > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.adv-t { font-family: var(--display); font-weight: 600; font-size: 17px; color: var(--accent); }
+.adv-s { font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
+details.advanced > .note { margin: 0; }
+.res-card h2 { margin-bottom: 10px; }
+.res-card .chart { border: 0; padding: 0; }
+.wait-box { border: 1px dashed var(--line); border-radius: 8px; padding: 22px 16px; color: var(--muted); font-size: 14px; text-align: center; }
+ul.tips { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 8px; font-size: 14px; }
+ul.tips li { padding-left: 14px; position: relative; }
+ul.tips li::before { content: ""; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+ul.tips li.no::before { background: var(--line); }
+ul.tips .yours { color: var(--muted); font-size: 12.5px; }
+details.keynums { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+details.keynums summary { cursor: pointer; font-weight: 500; font-size: 13.5px; margin-bottom: 8px; }
+.sure { font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1.25; margin: 4px 0 8px; text-wrap: balance; }
+details.unc-more > summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--accent); }
+.field label { flex-wrap: wrap; column-gap: 6px; }
+.tag { font: 500 10.5px var(--body); letter-spacing: .02em; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; line-height: 1.5; }
+.tag.yours { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tag.hyp { background: var(--su-tint); border-color: var(--su); color: var(--su); }
+.tag.est { border-style: dashed; }
+details.howto { margin-top: 22px; }
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Outcome-adjusted LCA · flexible ureteroscopy</div>
+    <h1>Does your single-use ureteroscope have a lower carbon footprint per care episode compared to your reusable option?</h1>
+    <p>The answer depends heavily on your hospital's electricity and on how often ureteral access fails with each scope. Choose your practice location and enter your estimated primary ureteroscopy failure rates; everything else starts at a published or estimated default you can change under Advanced inputs.</p>
+    <div class="ver" id="verLine">Version 6.2 · October 15, 2026 · <a href="#howto" id="howLink">How to use it</a> · <a href="#changelog" id="verLink">What changed</a></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Calculator view">
+      <button type="button" id="view-ep" aria-pressed="true">Your calculation</button>
+      <button type="button" id="view-dev" aria-pressed="false">Published studies</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="dlCsv">Download CSV</button>
+      <button type="button" class="btn" id="copyLink">Copy shareable link</button>
+    </div>
+  </div>
+  <div class="sharebox" id="sharebox" hidden>
+    <div class="msg" id="shareMsg"></div>
+    <div class="row" id="linkRow" hidden><input id="linkOut" readonly aria-label="Shareable link"></div>
+    <div id="csvRow" hidden><textarea id="csvOut" readonly aria-label="CSV text"></textarea></div>
+  </div>
+
+  <div id="view-episode">
+  <section class="banner" id="banner" aria-live="polite" aria-label="Verdict">
+    <span id="pill" class="pill wait">Waiting for your location</span>
+    <p class="headline" id="headline">Choose your hospital's country, and its state if you are in the U.S., in step 1 to see the result.</p>
+    <p class="sub-line" id="bannerSure"></p>
+    <p class="sub-line muted" id="percase"></p>
+  </section>
+
+  <div class="grid">
+    <div class="steps">
+
+      <section class="card" aria-labelledby="h-loc">
+        <h2 id="h-loc"><span class="n">1</span>Where is your hospital?</h2>
+        <p class="lede">Reprocessing a reusable scope runs on your hospital's electricity, so the grid sets most of its footprint. There is no default: pick your country or U.S. state, or enter your own grid value. Whichever you pick last sets the value.</p>
+        <div class="fields">
+          <div class="field">
+            <label for="country"><span>Country (national average)<sup class="ref" data-ref="countries"></sup></span></label>
+            <select id="country"></select>
+          </div>
+          <div class="field">
+            <label for="state"><span>U.S. state or eGRID subregion<sup class="ref" data-ref="egrid"></sup></span></label>
+            <select id="state"></select>
+          </div>
+          <div class="field">
+            <label for="ci">Grid carbon intensity used</label>
+            <div class="unit-input"><input id="ci" type="number" step="0.001" min="0" value="" placeholder="choose above"><span>kg/kWh</span></div>
+          </div>
+          <div class="field wide">
+            <div class="hint" id="gridHint"></div>
+            <div class="chips" aria-label="Scenario values">
+              <button type="button" data-ci="0" data-market="1">Renewable electricity contract: 0 (market-based)</button>
+              <button type="button" data-ci="1.0">Coal-heavy grid ~1.0</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-clin">
+        <h2 id="h-clin"><span class="n">2</span>How often does ureteral access fail?</h2>
+        <p class="lede">The share of unstented patients in whom the scope cannot reach the stone, so a stent goes in and the case is repeated. Published conventional rates run 8% to 16%.<sup class="ref" data-ref="cetti"></sup><sup class="ref" data-ref="khan"></sup><sup class="ref" data-ref="morgan"></sup><sup class="ref" data-ref="viers"></sup> The one 6.3 Fr primary-ureteroscopy series reported 5.3% (2 of 38).<sup class="ref" data-ref="ebner"></sup></p>
+        <div class="fields">
+          <div class="field"><label for="pRU"><span>Reusable scope<sup class="ref" data-ref="hyp"></sup></span></label><div class="unit-input"><input id="pRU" type="number" step="0.5" min="0" max="100" value="5"><span>%</span></div></div>
+          <div class="field"><label for="pSU"><span>Small single-use scope<sup class="ref" data-ref="hyp"></sup></span></label><div class="unit-input"><input id="pSU" type="number" step="0.5" min="0" max="100" value="1"><span>%</span></div></div>
+          <p class="note" style="grid-column:1/-1;margin-top:0">The 5% and 1% defaults are the study hypothesis, not published rates. Enter your own audit if you have one.</p>
+        </div>
+      </section>
+
+      <details class="advanced" id="adv">
+        <summary><span class="adv-chev" aria-hidden="true"></span><span class="adv-t"><span id="advCue">Show</span> advanced inputs <span class="opt">Optional</span></span><span class="adv-d">Scope inventories, the return-to-OR session, ED visits, admissions and travel</span><span class="adv-s" id="advSum"></span></summary>
+        <p class="note" style="margin-top:6px">Every value below starts at a published figure or a study-team estimate. The tag beside each label says which; it changes to "Your data" when you edit it.</p>
+
+      <section class="card" aria-labelledby="h-dev">
+        <h2 id="h-dev"><span class="n">A</span>Scope footprint per use</h2>
+        <p class="lede">Build both scopes from a published inventory so your grid value applies, or enter a published pair of totals.</p>
+        <div class="seg" role="group" aria-label="Device input mode">
+          <button type="button" id="mode-build" aria-pressed="true">Build from components</button>
+          <button type="button" id="mode-pub" aria-pressed="false">Published totals</button>
+        </div>
+
+        <div id="pub-panel" hidden>
+          <div class="fields">
+            <div class="field" style="grid-column: 1 / -1">
+              <label for="preset"><span>Published study pair<sup class="ref" id="presetRef" data-ref="thone"></sup></span></label>
+              <select id="preset"></select>
+            </div>
+            <div class="field"><label for="eSUp">Single-use, per use</label><div class="unit-input"><input id="eSUp" type="number" step="0.01" min="0"><span>kg</span></div></div>
+            <div class="field"><label for="eRUp">Reusable, per use</label><div class="unit-input"><input id="eRUp" type="number" step="0.01" min="0"><span>kg</span></div></div>
+          </div>
+          <p class="note" id="noteThone">Thöne's text gives the reusable scope as 4.32 kg on the conventional German grid, but its Figure 2 implies about 2.1 kg (1.98E-06 DALYs). The text value is shown. Published totals carry each study's own grid, so your location does not change them.</p>
+          <p class="note" id="noteMerlin" hidden>Merlin values are read from the bars in its Figure 3. Merlin left device manufacturing out, which flatters single-use.</p>
+          <p class="note">The Published studies tab at the top shows each study's stage-by-stage inventory.</p>
+        </div>
+
+        <div id="build-panel">
+          <div class="fields">
+            <div class="field wide">
+              <label for="refInv"><span>Reference inventory</span></label>
+              <select id="refInv">
+                <option value="thone">Thöne 2024 · Germany · 133 uses · single-use made in China</option>
+                <option value="davis">Davis 2018 · Australia · 180 uses · LithoVue single-use</option>
+                <option value="custom">Your own values</option>
+              </select>
+              <div class="hint" id="invHint"></div>
+            </div>
+          </div>
+          <div class="sub">Reusable scope</div>
+          <div class="fields">
+            <div class="field"><label for="mRU"><span>Scope manufacture, transport and disposal<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="mRU" type="number" step="0.1" min="0" value="31.4"><span>kg/scope</span></div></div>
+            <div class="field"><label for="life"><span>Lifetime uses<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="life" type="number" step="1" min="1" value="133"><span>uses</span></div></div>
+            <div class="field"><label for="kRep"><span>Electricity per reprocessing cycle<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="kRep" type="number" step="0.1" min="0" value="7.89"><span>kWh</span></div><div class="hint">Multiplied by your grid value</div></div>
+            <div class="field"><label for="cRep"><span>Other reprocessing inputs per cycle<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="cRep" type="number" step="0.01" min="0" value="1.76"><span>kg</span></div><div class="hint">Water, chemicals, PPE, wraps</div></div>
+            <div class="field"><label for="nCyc"><span>Scopes per cycle<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="nCyc" type="number" step="1" min="1" value="2"><span>scopes</span></div></div>
+            <div class="field"><label for="rep"><span>Footprint per repair<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="rep" type="number" step="0.1" min="0" value="0.91"><span>kg</span></div><div class="hint">Include shipping both ways</div></div>
+            <div class="field"><label for="nRep"><span>Uses between repairs<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="nRep" type="number" step="1" min="1" value="11"><span>uses</span></div></div>
+            <div class="field"><label for="uRU"><span>Other in-case use<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="uRU" type="number" step="0.01" min="0" value="0.04"><span>kg</span></div></div>
+          </div>
+          <div class="sub">Single-use scope</div>
+          <div class="fields">
+            <div class="field"><label for="mSU"><span>Cradle-to-grave, per scope<sup class="ref" data-ref="thone"></sup></span></label><div class="unit-input"><input id="mSU" type="number" step="0.01" min="0" value="4.93"><span>kg</span></div><div class="hint">Made on the factory's grid, so your location does not change it</div></div>
+            <div class="field wide">
+              <div class="hint">Published single-use values run from 2.28 to 6.25 kg. Try one:</div>
+              <div class="chips" id="suChips" aria-label="Published single-use values">
+                <button type="button" data-su="2.28" data-ref="merlin">2.28 LithoVue (Merlin)</button>
+                <button type="button" data-su="2.87" data-ref="merlin">2.87 Neoscope (Merlin)</button>
+                <button type="button" data-su="3.6" data-ref="thone">3.6 made in Germany (Thöne)</button>
+                <button type="button" data-su="4.41" data-ref="thone">4.41 made in Malaysia (Thöne)</button>
+                <button type="button" data-su="4.43" data-ref="davis">4.43 LithoVue (Davis)</button>
+                <button type="button" data-su="4.93" data-ref="thone">4.93 made in China (Thöne)</button>
+                <button type="button" data-su="6.25" data-ref="thone">6.25 conventional grid (Thöne)</button>
+              </div>
+            </div>
+          </div>
+          <p class="note">The reusable scope is built from the chosen inventory's materials, repairs and lifetime, plus your grid value times the electricity per reprocessing cycle. Thöne's own 1.24 kg assumed a hospital on 100% renewable electricity; here that only happens if you pick the renewable-contract option in step 1.</p>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-ep">
+        <h2 id="h-ep"><span class="n">B</span>What one failed access adds</h2>
+        <p class="lede">A failed access means a pre-stent and a return to the OR. Only activities caused by the failure count. The pre-stent comes out at the return visit, and a post-treatment stent occurs either way, so neither adds a removal. The return visit's scope is counted in A.</p>
+        <div class="sub">Return to the OR</div>
+        <div class="fields">
+          <div class="field"><label for="abort"><span>Aborted first attempt: share of OR time and anesthesia used<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="abort" type="number" step="5" min="0" max="100" value="100"><span>%</span></div><div class="hint">Scales only OR energy, anesthesia drugs and IV fluids, and anesthetic gases. Drapes, disposables, linen, trays, recovery and waste count in full, because the aborted attempt uses them too.</div></div>
+          <div class="field"><label for="orFix"><span>Return-to-OR session, excluding scope and anesthetic gases<sup class="ref" data-ref="john"></sup><sup class="ref" data-ref="macneill"></sup></span></label><div class="unit-input"><input id="orFix" type="number" readonly tabindex="-1" value="73"><span>kg</span></div><div class="hint">The second OR visit after failed access, as a complete case. Sum of the components below; plausible range 24 to 170</div></div>
+          <div class="field"><label for="orKwh">OR electricity, if submetered</label><div class="unit-input"><input id="orKwh" type="number" step="1" min="0" value="0"><span>kWh</span></div><div class="hint">Optional; multiplied by the grid value</div></div>
+          <div class="field"><label for="agent"><span>Anesthetic<sup class="ref" data-ref="asa"></sup></span></label>
+            <select id="agent">
+              <option value="0">TIVA (no volatile agent)</option>
+              <option value="1.61" selected>Sevoflurane</option>
+              <option value="3.22">Isoflurane</option>
+            </select>
+            <div class="hint">kg CO2e per MAC-hour at 1 L/min</div>
+          </div>
+          <div class="field"><label for="hrs"><span>Anesthetic time<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="hrs" type="number" step="0.25" min="0" value="1"><span>h</span></div></div>
+          <div class="field"><label for="fgf"><span>Fresh gas flow<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="fgf" type="number" step="0.5" min="0" value="1"><span>L/min</span></div></div>
+          <div class="field"><label for="stent"><span>Pre-stent and extra OR minutes<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="stent" type="number" step="0.1" min="0" value="1"><span>kg</span></div><div class="hint">Stent and packaging about 0.5, about 10 extra OR minutes about 0.5</div></div>
+        </div>
+        <details class="orparts" id="orParts">
+          <summary>Return-to-OR session components <span class="mono" id="orSum">73.0 kg</span></summary>
+          <div class="fields">
+            <div class="field"><label for="orEnergy"><span>OR energy, heating and ventilation<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orEnergy" type="number" step="1" min="0" value="20"><span>kg</span></div></div>
+            <div class="field"><label for="orSupplies"><span>Single-use supplies (drapes, gowns, gloves, wire, sheath, basket, laser fiber, irrigation)<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orSupplies" type="number" step="1" min="0" value="20"><span>kg</span></div></div>
+            <div class="field"><label for="orDrugs"><span>Non-inhaled anesthesia drugs and IV fluids<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orDrugs" type="number" step="1" min="0" value="15"><span>kg</span></div></div>
+            <div class="field"><label for="orReproc"><span>Linen, laundry and instrument-tray reprocessing<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orReproc" type="number" step="1" min="0" value="10"><span>kg</span></div></div>
+            <div class="field"><label for="orRecovery"><span>Pre-op holding and recovery<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orRecovery" type="number" step="1" min="0" value="5"><span>kg</span></div></div>
+            <div class="field"><label for="orWaste"><span>Waste disposal<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input class="orc" id="orWaste" type="number" step="1" min="0" value="3"><span>kg</span></div></div>
+          </div>
+          <p class="note">Study-team allocations, scaled against the category totals of a process LCA of day-case transurethral resection (John 2024: electricity and gas 17.5, surgical equipment 29.2, drugs including sevoflurane 35.5, water and laundry 15.2 kg). Replace with your own OR audit. These are the values for a complete case. The aborted-attempt share above scales only OR energy and anesthesia drugs and IV fluids.</p>
+        </details>
+        <div class="sub">While the pre-stent is in</div>
+        <div class="fields">
+          <div class="field"><label for="pED"><span>ED visit rate<sup class="ref" data-ref="rocks"></sup></span></label><div class="unit-input"><input id="pED" type="number" step="0.5" min="0" max="100" value="10"><span>%</span></div><div class="hint">Published 6.6% to 14.6%<sup class="ref" data-ref="elliott"></sup><sup class="ref" data-ref="carlos"></sup><sup class="ref" data-ref="unplanned"></sup></div></div>
+          <div class="field"><label for="eED"><span>ED visit, facility only<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="eED" type="number" step="1" min="0" value="15"><span>kg</span></div><div class="hint">Includes CT in most</div></div>
+          <div class="field"><label for="pAdm"><span>Admission rate<sup class="ref" data-ref="rocks"></sup></span></label><div class="unit-input"><input id="pAdm" type="number" step="0.5" min="0" max="100" value="3.5"><span>%</span></div><div class="hint">Published 2.2% to 5.1%<sup class="ref" data-ref="elliott"></sup><sup class="ref" data-ref="unplanned"></sup></div></div>
+          <div class="field"><label for="los"><span>Length of stay<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="los" type="number" step="0.5" min="0" value="1.5"><span>days</span></div></div>
+          <div class="field"><label for="eDay"><span>Inpatient day<sup class="ref" data-ref="inpatient"></sup></span></label><div class="unit-input"><input id="eDay" type="number" step="1" min="0" value="45"><span>kg</span></div></div>
+        </div>
+        <label class="toggle-row" for="travelOn"><input id="travelOn" type="checkbox">Include patient travel (excluded by default)</label>
+        <div class="fields" id="travel-fields" hidden style="margin-top:12px">
+          <div class="field"><label for="trips"><span>Extra trips<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="trips" type="number" step="1" min="0" value="1"><span>trips</span></div></div>
+          <div class="field"><label for="miles"><span>Round-trip distance<sup class="ref" data-ref="est"></sup></span></label><div class="unit-input"><input id="miles" type="number" step="5" min="0" value="60"><span>miles</span></div></div>
+          <div class="field"><label for="tmode">Mode of transportation</label>
+            <select id="tmode">
+              <option value="gas" selected>Passenger vehicle (Gasoline)</option>
+              <option value="ev">Electric vehicle</option>
+              <option value="bus">Public bus (Diesel/Gas)</option>
+              <option value="train">Intercity/Commuter Train</option>
+              <option value="active">Active Transit (Walking/Biking)</option>
+            </select>
+          </div>
+          <div class="field"><label for="ef"><span>Vehicle factor<sup class="ref" id="efRef" data-ref="epaveh"></sup></span></label><div class="unit-input"><input id="ef" type="number" readonly tabindex="-1" value="0.400"><span>kg/mile</span></div><div class="hint" id="efHint">Set by the mode of transportation</div></div>
+        </div>
+        <p class="note">Leaving travel out lowers the cost of a failed access, which works against single-use. A single-use win without travel is therefore a conservative result.</p>
+      </section>
+      </details>
+    </div>
+
+    <aside class="results" aria-live="polite" aria-labelledby="h-res">
+      <section class="card res-card">
+        <h2 id="h-res"><span class="n">3</span>Your result</h2>
+        <div id="resWait" class="wait-box">Your result appears here once you choose a location in step 1.</div>
+        <div id="resBody" hidden>
+          <div class="chart">
+            <h3>Carbon footprint per 100 patients</h3>
+            <p class="cap">Only what differs between the two strategies. The shorter bar is the lower-carbon choice.</p>
+            <svg id="bar" viewBox="0 0 400 128" role="img" aria-label="Carbon footprint per 100 patients for each strategy"></svg>
+            <div class="key"><span><span class="sw solid"></span>The scopes themselves (100 uses)</span><span><span class="sw light"></span>Extra care after failed access</span></div>
+          </div>
+          <h3 class="panel-h" style="margin-top:16px">What would change the answer</h3>
+          <ul class="tips" id="tips"></ul>
+          <details class="keynums">
+            <summary>Key numbers</summary>
+            <div class="stats">
+              <div class="stat"><span class="k">Single-use per use</span><span class="v" id="sESU">–</span></div>
+              <div class="stat"><span class="k">Reusable per use</span><span class="v" id="sERU">–</span></div>
+              <div class="stat"><span class="k">One failed access adds</span><span class="v" id="sF">–</span></div>
+              <div class="stat"><span class="k">Failed access that would make them tie</span><span class="v" id="sFstar">–</span></div>
+              <div class="stat"><span class="k">Per patient</span><span class="v" id="sNet">–</span></div>
+              <div class="stat"><span class="k">Per 100 patients</span><span class="v" id="sNet100">–</span></div>
+            </div>
+            <h4 class="minor">What one failed access adds</h4>
+            <div class="legend" id="legend"></div>
+          </details>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="card unc" aria-labelledby="h-unc" id="uncCard" hidden>
+    <h2 id="h-unc">How sure is this?</h2>
+    <p class="sure" id="mcLine"></p>
+    <p class="lede" style="margin-bottom:8px">Every input was drawn at random between a low and a high value 5,000 times. The ranges are placeholders anchored on published values where they exist; edit them below.</p>
+    <details class="unc-more" id="uncMore">
+      <summary>Distribution, tornado chart and input ranges</summary>
+    <div class="unc-body" id="uncBody">
+      <div>
+        <h3 class="panel-h">Input ranges</h3>
+        <p class="panel-cap">Edit any low or high value; edited rows keep your numbers when other inputs change.</p>
+        <table class="rng">
+          <thead><tr><th scope="col">Input</th><th scope="col">Low</th><th scope="col">Current</th><th scope="col">High</th></tr></thead>
+          <tbody id="rngBody"></tbody>
+        </table>
+        <div class="actions" style="margin-top:10px"><button type="button" class="btn" id="resetRanges">Reset ranges</button></div>
+      </div>
+      <div>
+        <h3 class="panel-h">Monte Carlo result</h3>
+        <p class="panel-cap" id="mcCap">5,000 draws from a triangular distribution (low, current, high) for each input, with a fixed random seed so the same inputs always give the same answer.</p>
+        <div class="stats mc-stats">
+          <div class="stat"><span class="k">Chance single-use is lower</span><span class="v" id="mcP">–</span></div>
+          <div class="stat"><span class="k">Middle result, per 100 patients</span><span class="v" id="mcMed">–</span></div>
+          <div class="stat"><span class="k">90% of draws fall between</span><span class="v" id="mcCI">–</span></div>
+          <div class="stat"><span class="k">Result at your values</span><span class="v" id="mcBase">–</span></div>
+        </div>
+        <svg id="hist" viewBox="0 0 600 190" role="img" aria-label="Distribution of the difference per 100 patients"></svg>
+        <p class="panel-cap" style="margin-top:6px">Each bar counts draws. Right of the tie line, single-use is lower; left of it, reusable is lower.</p>
+        <h3 class="panel-h" style="margin-top:18px">Tornado: one input at a time</h3>
+        <p class="panel-cap" id="tornCap"></p>
+        <div class="key" style="margin:0 0 8px"><span><span class="sw" style="background:var(--seg7)"></span>Input at its low value</span><span><span class="sw" style="background:var(--accent)"></span>Input at its high value</span><span>Dashed line: your result</span></div>
+        <div class="tornado" id="tornado"></div>
+        <div class="taxis" id="taxis"></div>
+      </div>
+    </div>
+    </details>
+  </section>
+
+  <details class="howto" id="howto">
+    <summary>How to use this calculator, with a worked example</summary>
+    <ol>
+      <li><strong>Where is your hospital?</strong> Pick your country, and your state in the U.S. If your hospital buys renewable electricity, you can choose the renewable-contract option, but report the location-based result too.</li>
+      <li><strong>How often does access fail?</strong> Enter the share of unstented patients in whom access fails with each scope, from your own audit if you have one.</li>
+      <li><strong>Read the result.</strong> The sentence at the top gives the verdict. The bar chart shows how much comes from the scopes and how much from the extra care after failed access. The list under it says which values would flip the answer.</li>
+      <li><strong>Refine if you have data.</strong> Advanced inputs hold the scope inventories and the cost of one failed access. Save your inputs and results as a CSV or a link.</li>
+    </ol>
+    <div class="example">
+      <h3>Worked example</h3>
+      <p>An Ohio hospital (eGRID subregion RFCW, 0.479 kg/kWh) uses Thöne's reprocessing inventory and audits failed access at 8% with its reusable scope and 3% with a 6.3 Fr single-use scope. Every other input stays at its default.</p>
+      <p id="exResult"></p>
+      <div class="actions">
+        <button type="button" class="btn primary" id="loadExample">Load this example</button>
+        <button type="button" class="btn" id="resetAll">Reset all to defaults</button>
+      </div>
+    </div>
+  </details>
+  </div>
+
+  <div id="view-device" hidden>
+    <section class="card" aria-labelledby="h-inv">
+      <h2 id="h-inv">Published studies: device footprint per use</h2>
+      <p class="lede">The scope itself, stage by stage, as each study reported it. This view leaves out failed access entirely, which is how most published comparisons are framed. Edit any stage to see how much it moves the total.</p>
+      <div class="fields">
+        <div class="field" style="grid-column: 1 / -1"><label for="invStudy">Study</label><select id="invStudy"></select></div>
+        <div class="field" id="merlinSUf" hidden><label for="merlinSU">Merlin single-use scope</label><select id="merlinSU"></select></div>
+        <div class="field" id="merlinRUf" hidden><label for="merlinRU">Merlin reusable scope</label><select id="merlinRU"></select></div>
+      </div>
+      <div class="inv-grid">
+        <div><h3 class="su" id="invSUh">Single-use</h3><table class="stages"><thead><tr><th scope="col">Stage</th><th scope="col">kg CO2e</th><th scope="col">Share</th></tr></thead><tbody id="invSU"></tbody><tfoot><tr><td>Total per use</td><td class="num" id="invSUt"></td><td></td></tr></tfoot></table></div>
+        <div><h3 class="ru" id="invRUh">Reusable</h3><table class="stages"><thead><tr><th scope="col">Stage</th><th scope="col">kg CO2e</th><th scope="col">Share</th></tr></thead><tbody id="invRU"></tbody><tfoot><tr><td>Total per use</td><td class="num" id="invRUt"></td><td></td></tr></tfoot></table></div>
+      </div>
+      <div class="inv-sum" id="invSum"></div>
+      <svg id="invBar" viewBox="0 0 600 120" role="img" aria-label="Stage-by-stage footprint per use"></svg>
+      <div class="key" id="invKey"></div>
+      <ul class="note" id="invNotes" style="padding-left:18px;display:grid;gap:4px"></ul>
+      <div class="actions" style="margin-top:14px">
+        <button type="button" class="btn primary" id="invUse">Use these totals in your calculation</button>
+        <button type="button" class="btn" id="invReset">Reset to published values</button>
+      </div>
+    </section>
+  </div>
+
+  <details class="sources">
+    <summary>Formulas and sources</summary>
+    <div class="formula">e_RU = M_RU/L + (kWh_rep × CI + C_rep)/n_cyc + R/N_r + u_RU
+F    = OR_fixed + s × (OR_time + kWh_OR × CI + gases) + stent + p_ED × E_ED + p_adm × LOS × E_day [+ travel]
+       OR_time = OR energy + anesthesia drugs and IV fluids; OR_fixed = the other return-to-OR components
+       s = share of OR time and anesthesia used by the aborted first attempt
+F*   = [e_SU(1 + p_SU) − e_RU(1 + p_RU)] / (p_RU − p_SU)      single-use lower when F > F*
+p_RU* = [e_SU − e_RU + p_SU(e_SU + F)] / (e_RU + F)
+e_SU* = [e_RU(1 + p_RU) + (p_RU − p_SU)F] / (1 + p_SU)      single-use lower when e_SU < e_SU*
+Other tipping points: the model is linear in each input, so each is found by solving for the value where the two strategies tie.
+Uncertainty: each input ~ triangular(low, current, high), independent, 5,000 draws, seed 2026</div>
+    <ul>
+      <li>Grid intensities: U.S. national average and states from EPA eGRID2023 at the subregion level (each state assigned its primary subregion; New York split into Upstate, Downstate and Long Island). Other countries: national averages compiled by the study team.</li>
+      <li>Device defaults: Thöne M et al. Urolithiasis 2024;52:166. Davis NF et al. J Endourol 2018;32:214–217. Merlin P et al. J Endourol 2025;39:1230–1237. The Davis inventory is entered from its Table 2: reusable manufacture 0.06 and solid waste 0.005 kg per use over 180 uses (11.7 kg per scope), 7.89 kWh per reprocessing cycle shared by 2 scopes, repackaging 0.01 kg per cycle, repairs 0.45 kg per use (7.2 kg every 16 uses), and LithoVue 4.43 kg per use. At Davis's grid of about 1.0 kg/kWh this reproduces its 4.47 kg reusable total.</li>
+      <li>Location: the calculator has no default grid, because the reprocessing footprint depends on it more than on anything else. The renewable-contract option is market-based accounting: it counts purchased renewable electricity as zero. The GHG Protocol asks for the location-based value to be reported alongside it.</li>
+      <li>Single-use range: published totals run from 2.28 kg (LithoVue, Merlin, manufacturing processes excluded) to 6.25 kg (Thöne, conventional German grid at the hospital). Thöne does not report which stages rise on the conventional grid. The uncertainty analysis uses this span as the single-use range.</li>
+      <li>Access failure: Morgan K et al. Urolithiasis 2023;51:41 (15.4%); Viers BR et al. Urology 2015;86:878–884 (16%); Khan HS et al. PAFMJ 2018 (7.9%); Cetti RJ et al. Ann R Coll Surg Engl 2011 (about 8%); <a href="https://www.mdpi.com/2075-4418/15/19/2522">Ebner B et al. Diagnostics 2025</a> (6.3 Fr, 5.3%).</li>
+      <li>Return to the OR: a failed access adds one aborted attempt. The model counts the return-to-OR session as a complete case and credits back the OR time and anesthesia that the short aborted attempt did not use. Drapes, gowns, disposables, linen and tray reprocessing, recovery, waste and the pre-stent are used in full either way, so the aborted-attempt share does not scale them. Patient travel, when included, also counts in full.</li>
+      <li>OR session components: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11628940/">John JB et al. BJU Int 2024;134:268–281</a> (day-case transurethral resection, 121 kg median including patient and staff travel). Range: Merlin implies about 21 kg per ureteroscopy without OR ventilation; <a href="https://wrap.warwick.ac.uk/96255">MacNeill AJ et al. Lancet Planet Health 2017</a>, 146 to 232 kg per operation across a mixed case mix.</li>
+      <li>Anesthetic gases: <a href="https://www.asahq.org/about-asa/governance-and-committees/asa-committees/environmental-sustainability/greening-the-operating-room/inhaled-anesthetics">ASA</a> car-mile equivalents per MAC-hour at 1 L/min (sevoflurane 4, isoflurane 8) × 0.403 kg per mile. Scales roughly with time and fresh gas flow. Desflurane and nitrous oxide are excluded: both are being phased out, and leaving them out lowers the cost of a failed access, which works against single-use.</li>
+      <li>ED visits and admissions: Elliott CS et al. Urology 2018;117:44–49 (6.6% ED, 2.2% admission at 7 days); Michigan ROCKS (about 10% ED, 3.9% admission at 30 days); Carlos EC et al. J Urol 2019 (12.6% ED); Washington University (14.6% ED, 5.1% admission).</li>
+      <li>Inpatient day 45 kg: Thiel CL et al. Int J LCA 2022. Repeat imaging before the second operation is excluded because it is not routine. Vehicle 0.4 kg per mile: US EPA. The ED visit value is an assumption; no validated ED-visit LCA was found.</li>
+      <li>Uncertainty: inputs are drawn independently, so it ignores correlations (for example, a hospital with a long OR session may also have longer anesthetic times). Default ranges are placeholders: OR session 24 to 170 kg; ED visits 6.6% to 14.6%; admissions 2.2% to 5.1%; single-use footprint 2.28 to 6.25 kg; others scaled from the current value. Replace them with your own.</li>
+    </ul>
+    <h3 class="refs-h">References</h3>
+    <ol class="refs" id="refList"></ol>
+  </details>
+
+  <details class="changelog" id="changelog">
+    <summary>Version history</summary>
+    <dl>
+      <dt>6.2 · Oct 15, 2026</dt><dd>Numbering reset at the study team's request (the two entries below it were published as 10.0 and 9.0). State list always available; choosing a state sets the country to the United States, and whichever is chosen last sets the grid value. Fixes a bug where choosing a state reset the page. Aborted-attempt share now scales only OR time and anesthesia. "Full OR session" renamed return-to-OR session. Advanced inputs marked as optional and expandable. Pop-up definition for other reprocessing inputs. New opening text.</dd>
+      <dt>10.0 · Oct 15, 2026</dt><dd>Location is required, with no default grid; renewable contract labeled as market-based. Reference inventory choice (Thöne 2024 or Davis 2018) and published single-use values. Verdict sentence at the top with a car-mile equivalent; "single-use saves" or "reusable saves" in place of signed numbers; tipping points as sentences; uncertainty runs automatically, with details collapsed. Three-step layout with other inputs under Advanced; a tag on each input showing its source. Device-only view renamed Published studies. Thöne renewable-grid pair removed from the published totals.</dd>
+      <dt>9.0 · Oct 11, 2026</dt><dd>Aborted-attempt share as a single input; verdict reads "per care episode"; version stamp; how-to panel and worked example; uncertainty mode with Monte Carlo and tornado chart; device-only view with the Thöne, Davis and Merlin inventories; CSV download and shareable links.</dd>
+      <dt>8 · Oct 8, 2026</dt><dd>Per-case comparison under the verdict; bars split into per case and care after failed access; patient travel by mode of transportation; study notes for Thöne and Merlin; numbered references with pop-ups.</dd>
+      <dt>7 · Oct 5, 2026</dt><dd>Desflurane, nitrous oxide and repeat imaging removed; OR session built from six editable components.</dd>
+      <dt>3 to 6 · Oct 5, 2026</dt><dd>Country and U.S. state grid lists (EPA eGRID2023 subregions); layout revisions.</dd>
+      <dt>1 to 2 · Oct 4, 2026</dt><dd>First break-even calculator; pre-op visits and travel removed from the failed-access episode; anesthetic gases as their own input.</dd>
+    </dl>
+    <p class="note">This link always shows the newest version. Cite the version number with any result. Earlier versions are kept as files by the study team and can be restored on request.</p>
+  </details>
+
+  <p class="foot" id="foot">Ureteroscope carbon break-even calculator · Version 6.2 · October 15, 2026</p>
+</div>
+
+
+<script>
+(function () {
+  const VERSION = "6.2", VDATE = "October 15, 2026";
+  const $ = id => document.getElementById(id);
+  const fmt = (x, d = 1) => (Math.abs(x) < 0.05 && d === 1 ? 0 : x).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+  const sgn = (x, d) => `${x < 0 ? "−" : ""}${fmt(Math.abs(x), d)}`;
+  const sum = a => a.reduce((s, x) => s + x, 0);
+
+  // ---------- Step 1: published pairs ----------
+  const PRESETS = [
+    { name: "Thöne 2024, conventional German grid", su: 6.25, ru: 4.32 },
+    { name: "Davis 2018, Victoria grid", su: 4.43, ru: 4.47 },
+    { name: "Merlin 2025, Neoscope vs Storz Flex-X2S", su: 2.87, ru: 2.13 },
+    { name: "Merlin 2025, Neoscope vs Storz Flex-XC", su: 2.87, ru: 2.53 },
+    { name: "Merlin 2025, Neoscope vs Olympus URF-V3", su: 2.87, ru: 2.94 },
+    { name: "Merlin 2025, LithoVue vs Storz Flex-X2S", su: 2.28, ru: 2.13 },
+    { name: "Merlin 2025, LithoVue vs Storz Flex-XC", su: 2.28, ru: 2.53 },
+    { name: "Merlin 2025, LithoVue vs Olympus URF-V3", su: 2.28, ru: 2.94 }
+  ];
+  const sel = $("preset");
+  PRESETS.forEach((p, i) => { const o = document.createElement("option"); o.value = i; o.textContent = p.name; sel.appendChild(o); });
+  { const o = document.createElement("option"); o.value = "custom"; o.textContent = "Your own values"; sel.appendChild(o); }
+  let customRef = "est";
+  function presetNotes() {
+    const custom = sel.value === "custom", p = custom ? null : PRESETS[+sel.value];
+    $("noteMerlin").hidden = custom || !p.name.startsWith("Merlin");
+    $("noteThone").hidden = custom || !p.name.startsWith("Thöne");
+    $("presetRef").dataset.ref = custom ? customRef : p.name.split(" ")[0].replace("ö", "o").toLowerCase();
+  }
+  function applyPreset() { if (sel.value !== "custom") { const p = PRESETS[+sel.value]; $("eSUp").value = p.su; $("eRUp").value = p.ru; } presetNotes(); calc(); }
+  sel.addEventListener("change", applyPreset);
+  { const p0 = PRESETS[0]; $("eSUp").value = p0.su; $("eRUp").value = p0.ru; }
+  ["eSUp", "eRUp"].forEach(id => $(id).addEventListener("input", () => { sel.value = "custom"; customRef = "est"; presetNotes(); }));
+
+  let mode = "build";
+  function setMode(m, quiet) {
+    mode = m;
+    $("mode-build").setAttribute("aria-pressed", m === "build");
+    $("mode-pub").setAttribute("aria-pressed", m === "pub");
+    $("build-panel").hidden = m !== "build";
+    $("pub-panel").hidden = m !== "pub";
+    if (!quiet) calc();
+  }
+  $("mode-build").addEventListener("click", () => setMode("build"));
+  $("mode-pub").addEventListener("click", () => setMode("pub"));
+
+  // ---------- Grid values ----------
+  const COUNTRIES = [{"n": "Argentina", "f": "Primarily fueled by fossil gas (~51%), balanced by a mix of regional hydropower and nuclear", "ci": 0.291}, {"n": "Australia", "f": "Carbon intensity varies wildly by territory: the eastern states remain heavily anchored to coal infrastructure, whereas states like South Australia and Tasmania are predominantly powered by wind, solar, and hydro.", "ci": 0.62}, {"n": "Belgium", "f": "Heavily supported by a strong nuclear baseline", "ci": 0.085}, {"n": "Brazil", "f": "Highly decarbonized; relies on hydropower for over half its electricity alongside expanding wind and solar capacity", "ci": 0.082}, {"n": "Canada", "f": "Exceptionally clean national baseline due to massive regional hydropower (QC, BC) and nuclear fleets (ON), despite fossil fuel dependencies in Alberta/Saskatchewan", "ci": 0.11}, {"n": "China", "f": "Massive solar/wind additions, but remains anchored by a dominant coal baseline", "ci": 0.525}, {"n": "Czech Republic", "f": "Significant use of solid fossil fuels/coal", "ci": 0.45}, {"n": "Denmark", "f": "Massive wind power capacity; mostly decarbonized", "ci": 0.09}, {"n": "France", "f": "Primarily powered by a massive nuclear fleet", "ci": 0.052}, {"n": "Germany", "f": "Mixed; significant renewable growth but notable coal/gas backup", "ci": 0.371}, {"n": "Great Britain", "f": "Has experienced rapid decarbonization due to expanding offshore wind and the formal closure of its final coal-fired power plants. Regionally, intensity trends downward the further north you go", "ci": 0.129}, {"n": "Greece", "f": "Transitioning off lignite; increasing solar/gas mix", "ci": 0.315}, {"n": "Ireland", "f": "High wind penetration but balanced by natural gas backups", "ci": 0.24}, {"n": "Italy", "f": "High reliance on natural gas imports alongside solar/hydro", "ci": 0.27}, {"n": "Japan", "f": "High fossil fuel dependence (gas/coal) offset by active solar growth and a slow return to nuclear energy", "ci": 0.484}, {"n": "Netherlands", "f": "Transitioning rapidly from natural gas to offshore wind", "ci": 0.245}, {"n": "Norway", "f": "Near 100% renewable power generated from hydro", "ci": 0.015}, {"n": "Poland", "f": "Heavily reliant on coal and lignite", "ci": 0.662}, {"n": "Singapore", "f": "Almost entirely (~95%) by imported natural gas generation", "ci": 0.402}, {"n": "Spain", "f": "High share of wind, solar, and hydro", "ci": 0.165}, {"n": "Sweden", "f": "Nearly entirely fossil-free mix of hydro and nuclear", "ci": 0.045}, {"n": "Turkey", "f": "Mixed grid with high coal and gas components", "ci": 0.31}, {"n": "United States", "f": "Gas (43.2%) / Nuclear (18.5%) / Coal (16.1%) (EPA eGRID2023)", "ci": 0.35}];
+    const STATES = [{"n": "Alabama", "r": "SRSO (SERC South)", "f": "Natural Gas / Nuclear", "ci": 0.38}, {"n": "Alaska", "r": "AKGD (ASCC Alaska Grid)", "f": "Natural Gas / Hydro", "ci": 0.411}, {"n": "Arizona", "r": "AZNM (WECC Southwest)", "f": "Natural Gas / Nuclear", "ci": 0.32}, {"n": "Arkansas", "r": "SRMV (SERC Mississippi Valley)", "f": "Natural Gas / Coal", "ci": 0.268}, {"n": "California", "r": "CAMX (WECC California)", "f": "Natural Gas / Solar", "ci": 0.195}, {"n": "Colorado", "r": "RMPA (WECC Rockies)", "f": "Coal / Natural Gas", "ci": 0.428}, {"n": "Connecticut", "r": "NEWE (NPCC New England)", "f": "Nuclear / Natural Gas", "ci": 0.246}, {"n": "Delaware", "r": "RFCE (RFC East)", "f": "Natural Gas / Nuclear", "ci": 0.249}, {"n": "Florida", "r": "FRCC (FRCC All)", "f": "Natural Gas", "ci": 0.356}, {"n": "Georgia", "r": "SRSO (SERC South)", "f": "Natural Gas / Nuclear", "ci": 0.38}, {"n": "Hawaii", "r": "HIOA (HICC Oahu)", "f": "Oil / Coal / Solar", "ci": 0.68}, {"n": "Idaho", "r": "NWPP (WECC Northwest)", "f": "Hydroelectric", "ci": 0.244}, {"n": "Illinois", "r": "RFCW (RFC West)", "f": "Nuclear / Coal", "ci": 0.479}, {"n": "Indiana", "r": "RFCW (RFC West)", "f": "Coal / Natural Gas", "ci": 0.479}, {"n": "Iowa", "r": "MROW (MRO West)", "f": "Wind / Coal", "ci": 0.42}, {"n": "Kansas", "r": "SPNO (SPP North)", "f": "Wind / Coal", "ci": 0.47}, {"n": "Kentucky", "r": "RFCM (RFC Michigan/Central)", "f": "Coal", "ci": 0.47}, {"n": "Louisiana", "r": "SRMV (SERC Mississippi Valley)", "f": "Natural Gas", "ci": 0.268}, {"n": "Maine", "r": "NEWE (NPCC New England)", "f": "Hydroelectric / Biomass", "ci": 0.246}, {"n": "Maryland", "r": "RFCE (RFC East)", "f": "Nuclear / Natural Gas", "ci": 0.249}, {"n": "Massachusetts", "r": "NEWE (NPCC New England)", "f": "Natural Gas / Solar", "ci": 0.246}, {"n": "Michigan", "r": "RFCM (RFC Michigan/Central)", "f": "Natural Gas / Coal / Nuclear", "ci": 0.47}, {"n": "Minnesota", "r": "MROW (MRO West)", "f": "Nuclear / Coal / Wind", "ci": 0.42}, {"n": "Mississippi", "r": "SRSO (SERC South)", "f": "Natural Gas", "ci": 0.38}, {"n": "Missouri", "r": "SRMW (SERC Midwest)", "f": "Coal", "ci": 0.616}, {"n": "Montana", "r": "NWPP (WECC Northwest)", "f": "Hydroelectric / Coal", "ci": 0.244}, {"n": "Nebraska", "r": "MROW (MRO West)", "f": "Coal / Wind", "ci": 0.42}, {"n": "Nevada", "r": "NWPP (WECC Northwest)", "f": "Natural Gas / Geothermal", "ci": 0.244}, {"n": "New Hampshire", "r": "NEWE (NPCC New England)", "f": "Nuclear", "ci": 0.246}, {"n": "New Jersey", "r": "RFCE (RFC East)", "f": "Nuclear / Natural Gas", "ci": 0.249}, {"n": "New Mexico", "r": "AZNM (WECC Southwest)", "f": "Wind / Natural Gas / Coal", "ci": 0.32}, {"n": "New York (Downstate)", "r": "NYCW (NPCC NYC/Westchester)", "f": "Hydroelectric / Nuclear / Gas", "ci": 0.163}, {"n": "New York (Long Island)", "r": "NYLI (NPCC Long Island)", "f": "", "ci": 0.421}, {"n": "New York (Upstate)", "r": "NYUP (NPCC Upstate NY)", "f": "Hydroelectric / Nuclear / Gas", "ci": 0.11}, {"n": "North Carolina", "r": "SRVC (SERC Virginia/Carolina)", "f": "Nuclear / Natural Gas", "ci": 0.255}, {"n": "North Dakota", "r": "MROW (MRO West)", "f": "Coal / Wind", "ci": 0.42}, {"n": "Ohio", "r": "RFCW (RFC West)", "f": "Natural Gas / Coal", "ci": 0.479}, {"n": "Oklahoma", "r": "SPSO (SPP South)", "f": "Wind / Natural Gas", "ci": 0.448}, {"n": "Oregon", "r": "NWPP (WECC Northwest)", "f": "Hydroelectric", "ci": 0.244}, {"n": "Pennsylvania", "r": "RFCE (RFC East)", "f": "Natural Gas / Nuclear", "ci": 0.249}, {"n": "Rhode Island", "r": "NEWE (NPCC New England)", "f": "Natural Gas", "ci": 0.246}, {"n": "South Carolina", "r": "SRVC (SERC Virginia/Carolina)", "f": "Nuclear", "ci": 0.255}, {"n": "South Dakota", "r": "MROW (MRO West)", "f": "Hydroelectric / Wind", "ci": 0.42}, {"n": "Tennessee", "r": "SRTV (SERC Tennessee Valley)", "f": "Nuclear / Natural Gas / Coal", "ci": 0.378}, {"n": "Texas", "r": "ERCT (ERCOT All)", "f": "Natural Gas / Wind", "ci": 0.334}, {"n": "Utah", "r": "RMPA (WECC Rockies)", "f": "Coal / Natural Gas", "ci": 0.428}, {"n": "Vermont", "r": "NEWE (NPCC New England)", "f": "Hydroelectric (Virtually 100% Carbon-Free)", "ci": 0.246}, {"n": "Virginia", "r": "SRVC (SERC Virginia/Carolina)", "f": "Natural Gas / Nuclear", "ci": 0.255}, {"n": "Washington", "r": "NWPP (WECC Northwest)", "f": "Hydroelectric", "ci": 0.244}, {"n": "Washington, D.C.", "r": "RFCE (RFC East)", "f": "", "ci": 0.249}, {"n": "West Virginia", "r": "RFCW (RFC West)", "f": "Coal", "ci": 0.479}, {"n": "Wisconsin", "r": "MROE (MRO East)", "f": "Natural Gas / Coal", "ci": 0.637}, {"n": "Wyoming", "r": "RMPA (WECC Rockies)", "f": "Coal", "ci": 0.428}];
+  const cSel = $("country"), sSel = $("state");
+  COUNTRIES.forEach((g, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${g.n} (${g.ci.toFixed(3)})`; cSel.appendChild(o); });
+  { const o = document.createElement("option"); o.value = "custom"; o.textContent = "Custom value"; cSel.appendChild(o); }
+  { const o = document.createElement("option"); o.value = ""; o.textContent = "Choose a country…"; cSel.insertBefore(o, cSel.firstChild); }
+  { const o = document.createElement("option"); o.value = "avg"; o.textContent = "No state selected"; sSel.appendChild(o); }
+  STATES.forEach((g, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${g.n} (${g.ci.toFixed(3)})`; sSel.appendChild(o); });
+  const US = COUNTRIES.findIndex(g => g.n === "United States");
+  const CUSTOM_HINT = "Using the value you typed or a scenario button.";
+  const MARKET_HINT = "Market-based accounting: purchased renewable electricity counts as zero. Report the location-based result for your country or state alongside it.";
+  let market = false;
+  const located = () => cSel.value !== "" && String($("ci").value).trim() !== "";
+  function gridHint() {
+    if (cSel.value === "") return "No location chosen yet.";
+    if (cSel.value === "custom") return market && parseFloat($("ci").value) === 0 ? MARKET_HINT : CUSTOM_HINT;
+    if (sSel.value !== "avg") { const g = STATES[+sSel.value]; return `${g.n}: eGRID subregion ${g.r}${g.f ? " · " + g.f : ""}`; }
+    const g = COUNTRIES[+cSel.value]; return `${g.n} national average: ${g.f}`;
+  }
+  // whichever list was used last sets the grid value: a state also sets the country to the United States,
+  // and a country choice clears the state so its national average is used
+  function applyCountry() {
+    market = false;
+    sSel.value = "avg";
+    if (cSel.value === "") { $("ci").value = ""; $("gridHint").textContent = gridHint(); return; }
+    if (cSel.value === "custom") { $("gridHint").textContent = gridHint(); return; }
+    $("ci").value = COUNTRIES[+cSel.value].ci.toFixed(3);
+    $("gridHint").textContent = gridHint();
+  }
+  function applyGridState() {
+    market = false;
+    if (sSel.value === "avg") { applyCountry(); return; }
+    cSel.value = String(US);
+    $("ci").value = STATES[+sSel.value].ci.toFixed(3);
+    $("gridHint").textContent = gridHint();
+  }
+  function toCustom() { cSel.value = "custom"; sSel.value = "avg"; $("gridHint").textContent = gridHint(); }
+  cSel.addEventListener("change", () => { applyCountry(); calc(); });
+  sSel.addEventListener("change", () => { applyGridState(); calc(); });
+  $("ci").addEventListener("input", () => { market = false; toCustom(); });
+  cSel.value = ""; applyCountry();
+  document.querySelectorAll("[data-ci]").forEach(b => b.addEventListener("click", () => { $("ci").value = b.dataset.ci; market = !!b.dataset.market; toCustom(); calc(); }));
+
+  // ---------- Reference inventory (Thöne or Davis) and published single-use values ----------
+  const INVSETS = {
+    thone: { ref: "thone", mRU: 31.4, life: 133, kRep: 7.89, cRep: 1.76, nCyc: 2, rep: 0.91, nRep: 11, uRU: 0.04, mSU: 4.93,
+      hint: "Thöne 2024 (Tübingen, Germany): an unnamed single-use scope made in China; reusable reprocessed 2 per cycle, 133 uses, a repair every 11 uses." },
+    davis: { ref: "davis", mRU: 11.7, life: 180, kRep: 7.89, cRep: 0.01, nCyc: 2, rep: 7.2, nRep: 16, uRU: 0, mSU: 4.43,
+      hint: "Davis 2018 (Victoria, Australia): LithoVue single-use; Olympus URF-V reusable, 180 uses with 11 repairs. Entered from its Table 2." }
+  };
+  const INV_IDS = ["mRU", "life", "kRep", "cRep", "nCyc", "rep", "nRep", "uRU", "mSU"];
+  const refInv = $("refInv");
+  function invRefs() {
+    const k = refInv.value === "custom" ? "est" : INVSETS[refInv.value].ref;
+    INV_IDS.forEach(id => { const sup = document.querySelector(`label[for="${id}"] sup.ref`); if (sup) sup.dataset.ref = k; });
+    $("invHint").textContent = refInv.value === "custom" ? "Your own values. Pick a study to reload its inventory." : INVSETS[refInv.value].hint;
+  }
+  function applyInv() {
+    const d = INVSETS[refInv.value];
+    if (d) INV_IDS.forEach(id => { $(id).value = d[id]; });
+    pubVal.mSU = null; invRefs();
+  }
+  refInv.addEventListener("input", applyInv);
+  INV_IDS.forEach(id => $(id).addEventListener("input", () => { if (refInv.value !== "custom") { refInv.value = "custom"; invRefs(); } }));
+  const pubVal = {};          // id -> value set from a published chip, so the tag reads "Published"
+  document.querySelectorAll("[data-su]").forEach(b => b.addEventListener("click", () => {
+    $("mSU").value = b.dataset.su;
+    if (refInv.value !== "custom" && +b.dataset.su !== INVSETS[refInv.value].mSU) { refInv.value = "custom"; invRefs(); }
+    pubVal.mSU = b.dataset.su;
+    const sup = document.querySelector('label[for="mSU"] sup.ref'); if (sup) sup.dataset.ref = b.dataset.ref;
+    calc();
+  }));
+  $("travelOn").addEventListener("change", () => { $("travel-fields").hidden = !$("travelOn").checked; calc(); });
+  $("view-episode").addEventListener("input", e => { if (!e.target.classList.contains("rng")) calc(); });
+
+  const TIMED = ["orEnergy", "orDrugs"];
+  const OR_PARTS = [["orEnergy", "OR energy, heating and ventilation"], ["orSupplies", "Single-use supplies"], ["orDrugs", "Non-inhaled drugs and IV fluids"], ["orReproc", "Linen and instrument-tray reprocessing"], ["orRecovery", "Pre-op holding and recovery"], ["orWaste", "Waste disposal"]];
+  let orOpen = false;
+  $("legend").addEventListener("click", e => { if (e.target.closest(".or-toggle")) { orOpen = !orOpen; calc(); } });
+
+  // kg CO2e per mile by mode; an EV uses the grid value × 0.30 kWh/mile × 1.10 charging loss
+  const MODES = { gas: 0.4, bus: 0.15, train: 0.05, active: 0 };
+  const vehicleFactor = (m, ci) => m === "ev" ? ci * 0.30 * 1.10 : MODES[m];
+  function showFactor() {
+    const m = $("tmode").value, ci = num("ci"), f = vehicleFactor(m, ci);
+    $("ef").value = f.toFixed(3);
+    $("efRef").dataset.ref = m === "gas" ? "epaveh" : "team";
+    $("efHint").textContent = m === "ev" ? `${ci.toFixed(3)} kg/kWh grid × 0.30 kWh/mile × 1.10 charging loss` : "Set by the mode of transportation";
+  }
+
+  // ---------- Model: read inputs into a plain object, then compute without touching the page ----------
+  const domGet = id => { const el = $(id); return el.type === "checkbox" ? el.checked : el.value; };
+  const num = (id, g = domGet) => { const x = parseFloat(g(id)); return isFinite(x) ? x : 0; };
+  const NUM_IDS = ["ci", "mRU", "life", "kRep", "cRep", "nCyc", "rep", "nRep", "uRU", "mSU", "eSUp", "eRUp", "pRU", "pSU", "orKwh", "agent", "hrs", "fgf", "abort", "stent", "pED", "eED", "pAdm", "los", "eDay", "trips", "miles"];
+  function readParams(g = domGet, m = mode) {
+    const P = { mode: m, orScale: 1, gasScale: 1 };
+    NUM_IDS.forEach(id => { P[id] = num(id, g); });
+    P.or = OR_PARTS.map(([id]) => num(id, g));
+    P.travelOn = String(g("travelOn")) === "true" || String(g("travelOn")) === "1";
+    P.tmode = g("tmode");
+    return P;
+  }
+  function parts(P, ci) {
+    let eSU, eRU;
+    if (P.mode === "pub") { eSU = P.eSUp; eRU = P.eRUp; }
+    else eRU = P.mRU / Math.max(P.life, 1) + (P.kRep * ci + P.cRep) / Math.max(P.nCyc, 1) + P.rep / Math.max(P.nRep, 1) + P.uRU, eSU = P.mSU;
+    const s = Math.min(Math.max(P.abort, 0), 100) / 100;
+    const tag = s === 1 ? "" : ` (× ${+(s * 100).toFixed(1)}%)`;
+    // the aborted share scales only what depends on OR time and anesthesia; drapes, disposables,
+    // linen and tray reprocessing, recovery and waste are used in full by the aborted attempt too
+    const orParts = OR_PARTS.map(([id, k], i) => ({ k: TIMED.includes(id) ? k + tag : k, x: P.or[i] * P.orScale * (TIMED.includes(id) ? s : 1) }));
+    if (P.orKwh > 0) orParts.push({ k: "Submetered OR electricity", x: P.orKwh * ci * s });
+    const gases = P.agent * P.hrs * P.fgf * P.gasScale * s;
+    const ed = P.pED / 100 * P.eED;
+    const adm = P.pAdm / 100 * P.los * P.eDay;
+    const travel = P.travelOn ? P.trips * P.miles * vehicleFactor(P.tmode, P.mode === "build" ? ci : P.ci) : 0;
+    const comps = [
+      { k: "Return-to-OR session", x: sum(orParts.map(p => p.x)), c: "var(--seg1)", parts: orParts },
+      { k: "Anesthetic gases" + tag, x: gases, c: "var(--seg2)" },
+      { k: "Pre-stent", x: P.stent, c: "var(--seg3)" },
+      { k: `ED visits (weighted, ${+P.pED.toFixed(1)}%)`, x: ed, c: "var(--seg4)" },
+      { k: `Admissions (weighted, ${+P.pAdm.toFixed(1)}%)`, x: adm, c: "var(--seg5)" }
+    ];
+    if (travel > 0) comps.push({ k: "Patient travel", x: travel, c: "var(--seg7)" });
+    return { eSU, eRU, F: sum(comps.map(c => c.x)), comps };
+  }
+  function evaluate(P) {
+    const ci = P.mode === "build" ? P.ci : 0;
+    const pRU = P.pRU / 100, pSU = P.pSU / 100;
+    const r = parts(P, ci);
+    const epRU = r.eRU * (1 + pRU) + pRU * r.F, epSU = r.eSU * (1 + pSU) + pSU * r.F;
+    return Object.assign(r, { pRU, pSU, dp: pRU - pSU, epRU, epSU, net: epRU - epSU });   // net > 0: single-use saves
+  }
+  function gridTie(P, pRU, pSU) {
+    if (P.mode !== "build") return "Build mode only";
+    const gap = c => { const a = parts(P, c); return (a.eRU * (1 + pRU) + pRU * a.F) - (a.eSU * (1 + pSU) + pSU * a.F); };
+    const g0 = gap(0), slope = gap(1) - g0;     // everything is linear in CI
+    if (Math.abs(slope) < 1e-9) return g0 > 0 ? "Single-use at any grid" : "Reusable at any grid";
+    const x = -g0 / slope;
+    if (x <= 0) return slope > 0 ? "Single-use at any grid" : "Reusable at any grid";
+    return `${fmt(x, 2)} <small>kg/kWh</small>`;
+  }
+  // words instead of signs: positive net means single-use is lower
+  const saves = (x, d) => Math.abs(x) < Math.pow(10, -d) / 2 ? "Tie" : (x > 0 ? "Single-use saves " : "Reusable saves ") + fmt(Math.abs(x), d);
+  const MILE = 0.4;          // kg CO2e per mile, typical gasoline car (US EPA)
+  // the model is linear in each of these inputs, so the tie point is one linear solve
+  function tieAt(P, key, cur) {
+    const at = x => { const Q = Object.assign({}, P); Q[key] = x; return evaluate(Q).net; };
+    const n0 = at(cur), d = cur === 0 ? 1 : Math.abs(cur) * 0.5, slope = (at(cur + d) - n0) / d;
+    if (Math.abs(slope) < 1e-12) return null;
+    return { x: cur - n0 / slope, slope };
+  }
+  function tipLines(P, r) {
+    const n = r.net;
+    if (Math.abs(n) < 1e-9) return [`<li>The two strategies tie at your inputs.</li>`];
+    const rows = [
+      { key: "pRU", lab: "the reusable failure rate", u: "%", d: 1, lo: 0, hi: 100 },
+      { key: "pSU", lab: "the single-use failure rate", u: "%", d: 1, lo: 0, hi: 100 },
+      P.mode === "build" ? { key: "ci", lab: "your grid value", u: " kg/kWh", d: 2, lo: 0, hi: 1.5 } : null,
+      P.mode === "build" ? { key: "mSU", lab: "the single-use footprint per use", u: " kg", d: 2, lo: 0, hi: 50 } : { key: "eSUp", lab: "the single-use footprint per use", u: " kg", d: 2, lo: 0, hi: 50 },
+      { key: "abort", lab: "the aborted attempt's share of OR time and anesthesia", u: "%", d: 0, lo: 0, hi: 100 }
+    ].filter(Boolean);
+    return rows.map(t => {
+      const cur = P[t.key], T = tieAt(P, t.key, cur);
+      const yours = `<span class="yours">(yours: ${fmt(cur, t.d === 0 ? 0 : t.d)}${t.u})</span>`;
+      if (!T || T.x < t.lo || T.x > t.hi) return `<li class="no">No value of ${t.lab} from ${t.lo} to ${t.hi}${t.u} flips it. ${yours}</li>`;
+      const down = (T.slope > 0) === (n > 0);  // winner holds while the input stays above the tie point
+      return `<li>The answer flips if ${t.lab} ${down ? "falls below" : "rises above"} <strong>${fmt(T.x, t.d)}${t.u}</strong>. ${yours}</li>`;
+    });
+  }
+
+  function calc() {
+    const P = readParams(), r = evaluate(P);
+    const { eSU, eRU, F, comps, pRU, pSU, dp, net } = r;
+    const ok = located();
+    $("resWait").hidden = ok; $("resBody").hidden = !ok; $("uncCard").hidden = !ok;
+    const pill = $("pill"), ban = $("banner");
+    advSummary(r);
+    showFactor();
+    paintTags();
+    if (!ok) {
+      pill.className = "pill wait"; pill.textContent = "Waiting for your location"; ban.className = "banner";
+      $("headline").textContent = "Choose your hospital's country, and its state if you are in the U.S., in step 1 to see the result.";
+      $("bannerSure").textContent = ""; $("percase").textContent = "";
+      return;
+    }
+    const Fstar = dp > 0 ? (eSU * (1 + pSU) - eRU * (1 + pRU)) / dp : null;
+    const suWins = net > 0, tie = Math.abs(net * 100) < 0.5;
+    pill.className = "pill " + (tie ? "wait" : suWins ? "su" : "ru");
+    pill.textContent = tie ? "About even" : suWins ? "Single-use lower" : "Reusable lower";
+    ban.className = "banner " + (tie ? "" : suWins ? "su" : "ru");
+    const per100 = Math.abs(net * 100), miles = per100 / MILE;
+    $("headline").textContent = tie ? "At your inputs, the two strategies are about even."
+      : `At your inputs, ${suWins ? "single-use" : "reusable"} saves ${fmt(per100, 0)} kg CO2e per 100 patients, about the same as driving ${fmt(miles, 0)} miles in a gasoline car.`;
+    const dCase = eRU - eSU;
+    $("percase").textContent = `Per use, before failed access: single-use ${fmt(eSU, 2)} kg, reusable ${fmt(eRU, 2)} kg. One failed access adds ${fmt(F)} kg.`;
+
+    $("sF").innerHTML = `${fmt(F)} <small>kg</small>`;
+    $("sFstar").innerHTML = dp <= 0 ? "None" : (Fstar <= 0 ? "Any value" : `${fmt(Fstar)} <small>kg</small>`);
+    $("sNet").innerHTML = `${saves(net, 2)} <small>kg</small>`;
+    $("sNet100").innerHTML = `${saves(net * 100, 0)} <small>kg</small>`;
+    $("sESU").innerHTML = `${fmt(eSU, 2)} <small>kg</small>`;
+    $("sERU").innerHTML = `${fmt(eRU, 2)} <small>kg</small>`;
+    $("tips").innerHTML = tipLines(P, r).join("");
+    draw(comps, F, { eRU, eSU, pRU, pSU, suWins, tie: net === 0 });
+    scheduleUnc();
+  }
+
+  function draw(comps, F, r) {
+    const svg = $("bar"), x0 = 92, x1 = 330, h = 30;
+    const rows = [
+      { k: "Reusable", c: "var(--ru)", scope: 100 * r.eRU, care: 100 * r.pRU * (F + r.eRU), win: !r.suWins && !r.tie, y: 14 },
+      { k: "Single-use", c: "var(--su)", scope: 100 * r.eSU, care: 100 * r.pSU * (F + r.eSU), win: r.suWins, y: 66 }
+    ];
+    const max = Math.max(...rows.map(d => d.scope + d.care), 1);
+    const X = val => x0 + (val / max) * (x1 - x0);
+    const mono = 'font-family="IBM Plex Mono, monospace"';
+    let s = "";
+    rows.forEach(d => {
+      const tot = d.scope + d.care;
+      s += `<text x="${x0 - 10}" y="${d.y + h / 2 + 5}" text-anchor="end" font-size="13" font-weight="${d.win ? 600 : 400}" fill="var(--ink)">${d.k}</text>`;
+      s += `<rect class="bar-seg" x="${x0}" y="${d.y}" width="${Math.max(X(d.scope) - x0, 0)}" height="${h}" fill="${d.c}"></rect>`;
+      s += `<rect class="bar-seg" x="${X(d.scope)}" y="${d.y}" width="${Math.max(X(tot) - X(d.scope), 0)}" height="${h}" fill="${d.c}" fill-opacity="0.35"></rect>`;
+      s += `<text x="${X(tot) + 6}" y="${d.y + h / 2 + 4}" font-size="12" font-weight="${d.win ? 600 : 400}" ${mono} fill="var(--ink)">${fmt(tot, 0)} kg</text>`;
+      // each part's value sits inside its segment; a segment too narrow for its number gets it just above
+      [[x0, X(d.scope), d.scope, "var(--surface)"], [X(d.scope), X(tot), d.care, "var(--ink)"]].forEach(([a, b, val, col]) => {
+        const t = fmt(val, 0), w = t.length * 6.6 + 6;
+        if (val <= 0) return;
+        s += b - a >= w
+          ? `<text x="${(a + b) / 2}" y="${d.y + h / 2 + 4}" text-anchor="middle" font-size="11" font-weight="500" ${mono} fill="${col}">${t}</text>`
+          : `<text x="${(a + b) / 2}" y="${d.y - 3}" text-anchor="middle" font-size="10" ${mono} fill="var(--muted)">${t}</text>`;
+      });
+    });
+    s += `<line x1="${x0}" x2="${x0}" y1="6" y2="${66 + h + 8}" stroke="var(--line)" stroke-width="1"></line>`;
+    s += `<text x="${x0}" y="122" font-size="11" fill="var(--muted)">${r.tie ? "Tie" : (r.suWins ? "Single-use" : "Reusable") + " is lower by " + fmt(Math.abs(rows[0].scope + rows[0].care - rows[1].scope - rows[1].care), 0) + " kg per 100 patients"}</text>`;
+    svg.innerHTML = s;
+    $("orFix").value = fmt(sum(OR_PARTS.map(([id]) => num(id)))).replace(/,/g, "");
+    $("orSum").textContent = `${$("orFix").value} kg`;
+    $("legend").innerHTML = comps.map(c => c.parts
+      ? `<span><button type="button" class="or-toggle" aria-expanded="${orOpen}" title="${c.parts.map(p => `${p.k}: ${fmt(p.x)} kg`).join("\n")}">${c.k} <span aria-hidden="true">${orOpen ? "▾" : "▸"}</span></button></span><span class="val">${fmt(c.x)} kg</span>`
+        + (orOpen ? c.parts.map(p => `<span class="sub-item">${p.k}</span><span class="val sub-item">${fmt(p.x)} kg</span>`).join("") : "")
+      : `<span>${c.k}</span><span class="val">${fmt(c.x)} kg</span>`).join("") + `<span><strong>Total</strong></span><span class="val"><strong>${fmt(F)} kg</strong></span>`;
+  }
+
+  // ---------- Uncertainty: ranges, Monte Carlo and tornado ----------
+  const build = P => P.mode === "build", pub = P => P.mode === "pub";
+  const plain = k => ({ get: P => P[k], set: (P, x) => { P[k] = x; } });
+  const UNC = [
+    { k: "ci", l: "Grid carbon intensity", u: "kg/kWh", f: [0.8, 1.2], when: build, ...plain("ci") },
+    { k: "mRU", l: "Reusable: manufacture, transport, disposal", u: "kg", f: [0.5, 1.5], when: build, ...plain("mRU") },
+    { k: "life", l: "Reusable: lifetime uses", u: "uses", f: [0.4, 1.35], int: true, min: 1, when: build, ...plain("life") },
+    { k: "kRep", l: "Electricity per reprocessing cycle", u: "kWh", f: [0.7, 1.3], when: build, ...plain("kRep") },
+    { k: "cRep", l: "Other reprocessing inputs per cycle", u: "kg", f: [0.5, 1.5], when: build, ...plain("cRep") },
+    { k: "rep", l: "Footprint per repair", u: "kg", f: [0.5, 2], when: build, ...plain("rep") },
+    { k: "nRep", l: "Uses between repairs", u: "uses", f: [0.7, 1.8], int: true, min: 1, when: build, ...plain("nRep") },
+    { k: "uRU", l: "Reusable: other in-case use", u: "kg", f: [0.5, 1.5], when: build, ...plain("uRU") },
+    { k: "mSU", l: "Single-use: cradle-to-grave", u: "kg", f: [0.5, 1.6], abs: [2.28, 6.25], when: build, ...plain("mSU") },
+    { k: "eSUp", l: "Single-use per use", u: "kg", f: [0.7, 1.3], when: pub, ...plain("eSUp") },
+    { k: "eRUp", l: "Reusable per use", u: "kg", f: [0.7, 1.3], when: pub, ...plain("eRUp") },
+    { k: "pRU", l: "Failed access, reusable", u: "%", f: [0.6, 2], max: 100, ...plain("pRU") },
+    { k: "pSU", l: "Failed access, single-use", u: "%", f: [0.5, 3], max: 100, ...plain("pSU") },
+    { k: "abort", l: "Aborted attempt, share of OR time and anesthesia", u: "%", f: [0.5, 1], max: 100, ...plain("abort") },
+    { k: "orTot", l: "Return-to-OR session (all components)", u: "kg", f: [0.33, 2.33], get: P => sum(P.or), set: (P, x) => { const b = sum(P.or); P.orScale = b > 0 ? x / b : 1; } },
+    { k: "gas", l: "Anesthetic gases", u: "kg", f: [0.5, 2], get: P => P.agent * P.hrs * P.fgf, set: (P, x) => { const b = P.agent * P.hrs * P.fgf; P.gasScale = b > 0 ? x / b : 1; } },
+    { k: "stent", l: "Pre-stent and extra OR minutes", u: "kg", f: [0.5, 2], ...plain("stent") },
+    { k: "pED", l: "ED visit rate", u: "%", f: [0.66, 1.46], max: 100, ...plain("pED") },
+    { k: "eED", l: "ED visit footprint", u: "kg", f: [1 / 3, 2], ...plain("eED") },
+    { k: "pAdm", l: "Admission rate", u: "%", f: [0.63, 1.46], max: 100, ...plain("pAdm") },
+    { k: "los", l: "Length of stay", u: "days", f: [2 / 3, 4 / 3], ...plain("los") },
+    { k: "eDay", l: "Inpatient day", u: "kg", f: [2 / 3, 4 / 3], ...plain("eDay") },
+    { k: "miles", l: "Travel: round-trip distance", u: "miles", f: [0.5, 2], when: P => P.travelOn, ...plain("miles") }
+  ];
+  const RNG = {};            // k -> { lo, hi, ed }
+  const tidy = (x, row) => {
+    if (row.int) x = Math.round(x); else x = +(+x.toPrecision(3)).toFixed(4);
+    if (row.min != null) x = Math.max(row.min, x);
+    if (row.max != null) x = Math.min(row.max, x);
+    return Math.max(0, x);
+  };
+  const shown = x => +(+x.toPrecision(4)).toFixed(4);
+  $("rngBody").innerHTML = UNC.map(r => `<tr data-k="${r.k}"><td>${r.l}<small>${r.u}</small></td><td><input class="rng" type="number" step="any" min="0" data-k="${r.k}" data-side="lo" aria-label="${r.l}, low"></td><td class="cur" data-cur="${r.k}"></td><td><input class="rng" type="number" step="any" min="0" data-k="${r.k}" data-side="hi" aria-label="${r.l}, high"></td></tr>`).join("");
+  $("rngBody").addEventListener("input", e => {
+    const t = e.target; if (!t.classList.contains("rng")) return;
+    const x = parseFloat(t.value); if (!isFinite(x)) return;
+    const R = RNG[t.dataset.k]; R[t.dataset.side] = x; R.ed = true;
+    t.closest("tr").classList.add("edited");
+    scheduleUnc();
+  });
+  function syncRanges(P) {
+    const act = [];
+    UNC.forEach(row => {
+      const tr = document.querySelector(`#rngBody tr[data-k="${row.k}"]`);
+      const on = !row.when || row.when(P);
+      tr.hidden = !on;
+      if (!on) return;
+      const base = row.get(P);
+      let R = RNG[row.k];
+      if (!R || !R.ed) R = RNG[row.k] = row.abs ? { lo: Math.min(row.abs[0], base), hi: Math.max(row.abs[1], base), ed: false } : { lo: tidy(base * row.f[0], row), hi: tidy(base * row.f[1], row), ed: false };
+      tr.classList.toggle("edited", R.ed);
+      tr.querySelector(".cur").textContent = shown(base);
+      tr.querySelectorAll("input").forEach(inp => { if (document.activeElement !== inp) inp.value = shown(R[inp.dataset.side]); });
+      act.push({ row, base, lo: Math.min(R.lo, R.hi), hi: Math.max(R.lo, R.hi) });
+    });
+    return act;
+  }
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function tri(u, a, m, b) {
+    if (b <= a) return a;
+    m = Math.min(Math.max(m, a), b);
+    const c = (m - a) / (b - a);
+    return u < c ? a + Math.sqrt(u * (b - a) * (m - a)) : b - Math.sqrt((1 - u) * (b - a) * (b - m));
+  }
+  const clone = P => Object.assign({}, P);
+  const N_DRAWS = 5000, SEED = 2026;
+  let uncT, lastUnc = null;
+  function scheduleUnc() { clearTimeout(uncT); uncT = setTimeout(runUnc, 120); }
+  function runUnc() {
+    if (!located()) return;
+    const P = readParams(), act = syncRanges(P), base = evaluate(P).net * 100;
+    const rand = mulberry32(SEED), out = new Float64Array(N_DRAWS);
+    for (let i = 0; i < N_DRAWS; i++) {
+      const Q = clone(P);
+      act.forEach(a => a.row.set(Q, tri(rand(), a.lo, a.base, a.hi)));
+      out[i] = evaluate(Q).net * 100;
+    }
+    const sorted = Array.from(out).sort((a, b) => a - b);
+    const q = p => sorted[Math.min(N_DRAWS - 1, Math.max(0, Math.round(p * (N_DRAWS - 1))))];
+    const pSU = sorted.filter(x => x > 0).length / N_DRAWS;
+    $("mcP").innerHTML = `${fmt(pSU * 100, 0)}<small>%</small>`;
+    $("mcMed").innerHTML = `${saves(q(0.5), 0)} <small>kg</small>`;
+    const side = x => x >= 0 ? `single-use saving ${fmt(x, 0)}` : `reusable saving ${fmt(-x, 0)}`;
+    $("mcCI").innerHTML = `<span style="font-size:14px">${side(q(0.05))} and ${side(q(0.95))} <small>kg</small></span>`;
+    $("mcBase").innerHTML = `${saves(base, 0)} <small>kg</small>`;
+    const pc = Math.round(pSU * 100), win = pc >= 50;
+    const line = `${win ? "Single-use" : "Reusable"} is lower in ${win ? pc : 100 - pc}% of 5,000 plausible scenarios.`;
+    $("mcLine").textContent = line + (Math.abs(q(0.5)) < 0.5 ? " The middle scenario is a tie." : ` In the middle scenario, ${saves(q(0.5), 0).toLowerCase()} kg per 100 patients.`);
+    $("bannerSure").textContent = line + " See How sure is this? below the result.";
+    hist(sorted, base);
+    const torn = act.map(a => {
+      const lo = clone(P), hi = clone(P);
+      a.row.set(lo, a.lo); a.row.set(hi, a.hi);
+      return { a, nLo: evaluate(lo).net * 100, nHi: evaluate(hi).net * 100 };
+    }).map(t => Object.assign(t, { sw: Math.abs(t.nHi - t.nLo) })).sort((x, y) => y.sw - x.sw);
+    tornado(torn.filter(t => t.sw >= 0.5), torn.filter(t => t.sw < 0.5), base);
+    lastUnc = { pSU, med: q(0.5), p5: q(0.05), p95: q(0.95), base, torn };
+  }
+  function hist(sorted, base) {
+    const W = 600, H = 190, L = 14, R = 586, T = 26, B = 150, nb = 40;
+    let lo = sorted[0], hi = sorted[sorted.length - 1];
+    lo = Math.min(lo, 0, base); hi = Math.max(hi, 0, base);
+    if (hi - lo < 1) { lo -= 1; hi += 1; }
+    const w = (hi - lo) / nb, counts = new Array(nb).fill(0);
+    sorted.forEach(x => { counts[Math.min(nb - 1, Math.floor((x - lo) / w))]++; });
+    const cmax = Math.max(...counts), X = x => L + (x - lo) / (hi - lo) * (R - L);
+    let s = "";
+    counts.forEach((c, i) => {
+      if (!c) return;
+      const mid = lo + (i + 0.5) * w, bh = (B - T) * c / cmax;
+      s += `<rect x="${X(lo + i * w) + 0.5}" y="${B - bh}" width="${Math.max((R - L) / nb - 1, 1)}" height="${bh}" fill="${mid > 0 ? "var(--su)" : "var(--ru)"}" fill-opacity="0.8"></rect>`;
+    });
+    const mono = 'font-family="IBM Plex Mono, monospace"';
+    s += `<line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="var(--line)"></line>`;
+    s += `<line x1="${X(0)}" x2="${X(0)}" y1="${T - 12}" y2="${B + 4}" stroke="var(--ink)" stroke-width="1.5"></line>`;
+    s += `<text x="${X(0)}" y="${T - 15}" text-anchor="middle" font-size="12" fill="var(--ink)">Tie</text>`;
+    s += `<line x1="${X(base)}" x2="${X(base)}" y1="${T}" y2="${B}" stroke="var(--muted)" stroke-dasharray="4 3"></line>`;
+    s += `<text x="${L}" y="${B + 18}" font-size="12" ${mono} fill="var(--muted)">${fmt(Math.abs(lo), 0)}</text>`;
+    s += `<text x="${R}" y="${B + 18}" text-anchor="end" font-size="12" ${mono} fill="var(--muted)">${fmt(Math.abs(hi), 0)} kg</text>`;
+    s += `<text x="${X(0) - 6}" y="${B + 36}" text-anchor="end" font-size="12" fill="var(--ru)">← Reusable lower</text>`;
+    s += `<text x="${X(0) + 6}" y="${B + 36}" font-size="12" fill="var(--su)">Single-use lower →</text>`;
+    $("hist").innerHTML = s;
+  }
+  const lc = s => /^[A-Z]{2}/.test(s) ? s : s[0].toLowerCase() + s.slice(1);
+  function tornado(rows, flat, base) {
+    let lo = Math.min(0, base), hi = Math.max(0, base);
+    rows.forEach(t => { lo = Math.min(lo, t.nLo, t.nHi); hi = Math.max(hi, t.nLo, t.nHi); });
+    const pad = (hi - lo) * 0.16 || 1; lo -= pad; hi += pad;
+    const pc = x => ((x - lo) / (hi - lo) * 100).toFixed(2) + "%";
+    const crossing = rows.filter(t => (t.nLo > 0) !== (t.nHi > 0) || t.nLo === 0 || t.nHi === 0);
+    $("tornCap").textContent = rows.length
+      ? `Measure first: ${rows.slice(0, 3).map(t => lc(t.a.row.l)).join("; ")}. ` + (crossing.length ? (crossing.length === 1 ? "One input can flip the verdict on its own within its range" : `${crossing.length} inputs can each flip the verdict on their own within their ranges`) + " (bars that cross the tie line)." : "No single input flips the verdict on its own within its range.")
+      : "No input moves the result within its range.";
+    const unitTxt = a => a.row.u === "%" ? "%" : " " + a.row.u;
+    $("tornado").innerHTML = rows.map(t => {
+      const a = t.a, b = base;
+      const seg = (x, cls) => { const l = Math.min(x, b), r = Math.max(x, b); return `<span class="${cls}" style="left:${pc(l)};width:calc(${pc(r)} - ${pc(l)})"></span>`; };
+      const lab = (x, other) => x < other || (x === other && x < b) ? `<span class="tv" style="right:calc(100% - ${pc(x)} + 4px)">${fmt(Math.abs(x), 0)}</span>` : `<span class="tv" style="left:calc(${pc(x)} + 4px)">${fmt(Math.abs(x), 0)}</span>`;
+      return `<div class="trow"><div class="tl">${a.row.l}<small>${shown(a.lo)} to ${shown(a.hi)}${unitTxt(a)}</small></div><div class="tbar" title="Low: ${saves(t.nLo, 0)} kg; high: ${saves(t.nHi, 0)} kg per 100 patients">${seg(t.nLo, "seg-lo")}${seg(t.nHi, "seg-hi")}<span class="zero" style="left:${pc(0)}"></span><span class="base" style="left:${pc(b)}"></span>${lab(t.nLo, t.nHi)}${lab(t.nHi, t.nLo)}</div></div>`;
+    }).join("") + (flat.length ? `<p class="panel-cap" style="margin:4px 0 0">No visible effect: ${flat.map(t => lc(t.a.row.l)).join("; ")}.</p>` : "");
+    $("taxis").innerHTML = `<span class="zero" style="left:${pc(0)}"></span><span style="left:0">${fmt(Math.abs(lo), 0)}</span><span style="right:0">${fmt(Math.abs(hi), 0)} kg</span><span class="dir" style="right:calc(100% - ${pc(0)} + 6px);color:var(--ru)">← Reusable lower</span><span class="dir" style="left:calc(${pc(0)} + 6px);color:var(--su)">Single-use lower →</span>`;
+  }
+  $("resetRanges").addEventListener("click", () => { Object.keys(RNG).forEach(k => delete RNG[k]); runUnc(); });
+
+  // ---------- Device-only view: published inventories ----------
+  const CAT = {
+    make: ["Manufacture", "var(--seg1)"], ship: ["Transport", "var(--seg3)"], use: ["Use in the OR", "var(--seg7)"],
+    rep: ["Sterilization or reprocessing", "var(--seg2)"], fix: ["Repair and maintenance", "var(--seg6)"], eol: ["Disposal", "var(--seg5)"], tot: ["Whole device (no stages reported)", "var(--accent)"]
+  };
+  const MERLIN_SU = [["LithoVue (Boston Scientific)", 2.28], ["Neoscope", 2.87]];
+  const MERLIN_RU = [["Storz Flex-X2S (STERRAD)", 2.13], ["Storz Flex-XC", 2.53], ["Olympus URF-V3", 2.94]];
+  const INV = {
+    thone: {
+      name: "Thöne 2024, Germany (hospital on renewable electricity)", ref: "thone",
+      su: { h: "made in China", st: [["Production", 3.5, "make"], ["Delivery", 0.092, "ship"], ["Use", 0.14, "use"], ["Disposal", 1.2, "eol"]] },
+      ru: { h: "133 uses", st: [["Production", 0.16, "make"], ["Delivery", 0.000088, "ship"], ["Use", 0.04, "use"], ["Reprocessing", 0.88, "rep"], ["Maintenance", 0.083, "fix"], ["Disposal", 0.076, "eol"]] },
+      notes: [
+        "Source: Thöne Table 1 (kg CO2e per use). The hospital buys renewable electricity, which keeps reprocessing low.",
+        "Thöne's own sensitivity runs: conventional German grid, single-use 6.25 and reusable 4.32; 180 lifetime uses, reusable 1.17; repair after every use, reusable 2.07; single-use made in Germany, 3.6."
+      ]
+    },
+    davis: {
+      name: "Davis 2018, Australia (Victoria grid)", ref: "davis",
+      su: { h: "LithoVue, 0.3 kg", st: [["Manufacturing", 3.83, "make"], ["Sterilization", 0.3, "rep"], ["Solid waste", 0.3, "eol"]] },
+      ru: { h: "Olympus URF-V, 180 uses, 11 repairs", st: [["Manufacturing", 0.06, "make"], ["Washing and sterilization", 3.95, "rep"], ["Repackaging", 0.005, "rep"], ["Repair", 0.45, "fix"], ["Solid waste", 0.005, "eol"]] },
+      notes: [
+        "Source: Davis Table 2 (kg CO2e per use). Reprocessing is 7.89 kWh per cycle at about 1 kg/kWh, shared by 2 scopes.",
+        "Internal inconsistencies in the paper: the text gives single-use manufacturing as 3.45 (0.3 kg × 11.49) but Table 2 gives 3.83; the text gives repair as 0.31 (5 kg ÷ 16) but Table 2 gives 0.45. Repackaging is reported as under 0.005 and entered here as 0.005. Table values are shown."
+      ]
+    },
+    merlin: {
+      name: "Merlin 2025, France (four centers)", ref: "merlin",
+      notes: [
+        "Source: Merlin Figure 3, which reports a single total per device for one use; no stage breakdown is in the main text (it may be in the supplement).",
+        "Merlin left device manufacturing processes out, estimated single-use assembly as 30% of the total, and assumed 20 reusable uses between maintenance. Leaving manufacturing out flatters single-use."
+      ]
+    }
+  };
+  const invSel = $("invStudy"), mSU = $("merlinSU"), mRUs = $("merlinRU");
+  Object.entries(INV).forEach(([k, s]) => { const o = document.createElement("option"); o.value = k; o.textContent = s.name; invSel.appendChild(o); });
+  MERLIN_SU.forEach(([n], i) => { const o = document.createElement("option"); o.value = i; o.textContent = n; mSU.appendChild(o); });
+  MERLIN_RU.forEach(([n], i) => { const o = document.createElement("option"); o.value = i; o.textContent = n; mRUs.appendChild(o); });
+  let invEdit = {};          // "study|side|device" -> array of edited stage values
+  function invSide(side) {
+    const k = invSel.value;
+    let h, st, dev = "";
+    if (k === "merlin") {
+      const d = side === "su" ? MERLIN_SU[+mSU.value] : MERLIN_RU[+mRUs.value];
+      h = d[0]; st = [["Whole device, one use", d[1], "tot"]]; dev = d[0];
+    } else ({ h, st } = INV[k][side]);
+    const key = `${k}|${side}|${dev}`;
+    const vals = invEdit[key] || st.map(s => s[1]);
+    return { key, h, st, vals, total: sum(vals) };
+  }
+  function renderInv() {
+    const k = invSel.value, isM = k === "merlin";
+    $("merlinSUf").hidden = $("merlinRUf").hidden = !isM;
+    const S = { su: invSide("su"), ru: invSide("ru") };
+    ["su", "ru"].forEach(side => {
+      const d = S[side], up = side.toUpperCase();
+      $(`inv${up}h`).textContent = (side === "su" ? "Single-use: " : "Reusable: ") + d.h;
+      const body = $(`inv${up}`);
+      const rows = d.st.map((s, i) => `<tr><th scope="row" style="font-weight:400;color:var(--ink)"><span class="catdot" style="background:${CAT[s[2]][1]}"></span>${s[0]}</th><td><input type="number" step="any" min="0" data-side="${side}" data-i="${i}" aria-label="${s[0]}, ${side === "su" ? "single-use" : "reusable"}"></td><td class="num" data-share="${side}${i}"></td></tr>`).join("");
+      if (body.dataset.sig !== d.key) { body.innerHTML = rows; body.dataset.sig = d.key; }
+      body.querySelectorAll("input").forEach((inp, i) => { if (document.activeElement !== inp) inp.value = d.vals[i]; });
+      d.vals.forEach((x, i) => { body.querySelector(`[data-share="${side}${i}"]`).textContent = d.total > 0 ? fmt(x / d.total * 100, 0) + "%" : "–"; });
+      $(`inv${up}t`).textContent = fmt(d.total, 2) + " kg";
+    });
+    const su = S.su.total, ru = S.ru.total, diff = su - ru;
+    $("invSum").textContent = Math.abs(diff) < 0.005 ? `Per use, the two scopes tie at ${fmt(su, 2)} kg CO2e.`
+      : `Per use, ${diff > 0 ? "reusable" : "single-use"} is lower by ${fmt(Math.abs(diff), 2)} kg CO2e (single-use ${fmt(su, 2)} vs reusable ${fmt(ru, 2)} kg; ratio ${ru > 0 ? fmt(su / ru, 1) + "×" : "n/a"}).`;
+    // stacked bars by stage
+    const x0 = 92, x1 = 520, h = 30, max = Math.max(su, ru, 0.01), X = v => (v / max) * (x1 - x0);
+    const mono = 'font-family="IBM Plex Mono, monospace"';
+    let s = "";
+    [["Single-use", S.su, 12, "var(--su)"], ["Reusable", S.ru, 62, "var(--ru)"]].forEach(([lab, d, y, col]) => {
+      s += `<text x="${x0 - 10}" y="${y + h / 2 + 5}" text-anchor="end" font-size="13" fill="${col}" font-weight="600">${lab}</text>`;
+      let x = x0;
+      d.vals.forEach((v, i) => {
+        const w = X(v); if (w <= 0) return;
+        s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${CAT[d.st[i][2]][1]}" stroke="var(--surface)" stroke-width="1"></rect>`;
+        const t = fmt(v, 2);
+        if (w >= t.length * 6.4 + 8) s += `<text x="${x + w / 2}" y="${y + h / 2 + 4}" text-anchor="middle" font-size="11" ${mono} fill="var(--surface)">${t}</text>`;
+        x += w;
+      });
+      s += `<text x="${x + 6}" y="${y + h / 2 + 4}" font-size="12" ${mono} fill="var(--ink)">${fmt(d.total, 2)} kg</text>`;
+    });
+    s += `<line x1="${x0}" x2="${x0}" y1="4" y2="${62 + h + 6}" stroke="var(--line)"></line>`;
+    $("invBar").innerHTML = s;
+    const cats = [...new Set([...S.su.st, ...S.ru.st].map(x => x[2]))];
+    $("invKey").innerHTML = cats.map(c => `<span><span class="sw" style="background:${CAT[c][1]}"></span>${CAT[c][0]}</span>`).join("");
+    $("invNotes").innerHTML = INV[k].notes.map(n => `<li>${n}<sup class="ref" data-ref="${INV[k].ref}"></sup></li>`).join("");
+    paintRefs();
+    return S;
+  }
+  invSel.addEventListener("change", renderInv);
+  mSU.addEventListener("change", renderInv); mRUs.addEventListener("change", renderInv);
+  $("view-device").addEventListener("input", e => {
+    const t = e.target; if (t.dataset.side == null || t.dataset.i == null) return;
+    const d = invSide(t.dataset.side), x = parseFloat(t.value);
+    const vals = d.vals.slice(); vals[+t.dataset.i] = isFinite(x) ? x : 0;
+    invEdit[d.key] = vals; renderInv();
+  });
+  $("invReset").addEventListener("click", () => { invEdit = {}; renderInv(); });
+  $("invUse").addEventListener("click", () => {
+    const S = renderInv();
+    setView("episode"); setMode("pub", true);
+    sel.value = "custom"; customRef = INV[invSel.value].ref;
+    $("eSUp").value = +S.su.total.toFixed(4); $("eRUp").value = +S.ru.total.toFixed(4);
+    presetNotes(); calc();
+    $("h-dev").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  let view = "episode";
+  function setView(w) {
+    view = w;
+    $("view-ep").setAttribute("aria-pressed", w === "episode");
+    $("view-dev").setAttribute("aria-pressed", w === "device");
+    $("view-episode").hidden = w !== "episode";
+    $("view-device").hidden = w !== "device";
+    if (w === "device") renderInv();
+  }
+  $("view-ep").addEventListener("click", () => setView("episode"));
+  $("view-dev").addEventListener("click", () => setView("device"));
+
+  // ---------- Save, share and restore ----------
+  const saveEls = () => [...document.querySelectorAll("#view-episode input[id], #view-episode select[id]")].filter(el => !el.readOnly);
+  const elVal = el => el.type === "checkbox" ? (el.checked ? 1 : 0) : el.value;
+  let DEF;
+  function getState() {
+    const i = {};
+    saveEls().forEach(el => { const x = elVal(el); if (String(x) !== String(DEF.i[el.id])) i[el.id] = x; });
+    const r = {}; Object.entries(RNG).forEach(([k, R]) => { if (R.ed) r[k] = [R.lo, R.hi]; });
+    const S = { v: VERSION, g: 2, m: mode, w: view, i };
+    if (Object.keys(r).length) S.r = r;
+    if (invSel.value !== "thone" || Object.keys(invEdit).length || mSU.value !== "0" || mRUs.value !== "0") S.d = { s: invSel.value, a: mSU.value, b: mRUs.value, e: invEdit };
+    return S;
+  }
+  function applyState(S) {
+    S = S || {};
+    const vals = Object.assign({}, DEF.i, S.i || {});
+    // links made before 10.0 had the United States preselected
+    if (S.v && !S.g && /^[0-9]/.test(S.v) && parseFloat(S.v) >= 9 && parseFloat(S.v) < 10 && !(S.i && "country" in S.i)) { vals.country = String(US); if (!(S.i && "ci" in S.i)) vals.ci = "0.350"; }
+    saveEls().forEach(el => { if (!(el.id in vals)) return; if (el.type === "checkbox") el.checked = String(vals[el.id]) === "1"; else el.value = vals[el.id]; });
+    market = false;
+    $("gridHint").textContent = gridHint();
+    $("travel-fields").hidden = !$("travelOn").checked;
+    customRef = "est"; presetNotes(); invRefs(); pubVal.mSU = null;
+    setMode(S.m === "pub" ? "pub" : "build", true);
+    Object.keys(RNG).forEach(k => delete RNG[k]);
+    Object.entries(S.r || {}).forEach(([k, [lo, hi]]) => { RNG[k] = { lo: +lo, hi: +hi, ed: true }; });
+    const d = S.d || {};
+    invSel.value = INV[d.s] ? d.s : "thone"; mSU.value = d.a || "0"; mRUs.value = d.b || "0"; invEdit = d.e || {};
+    setView(S.w === "device" ? "device" : "episode");
+    calc();
+    renderInv();
+  }
+  const enc = S => btoa(unescape(encodeURIComponent(JSON.stringify(S)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const dec = t => JSON.parse(decodeURIComponent(escape(atob(t.replace(/-/g, "+").replace(/_/g, "/")))));
+  const shareLink = () => location.href.split("#")[0] + "#s=" + enc(getState());
+  function say(msg) { $("sharebox").hidden = false; $("shareMsg").textContent = msg; }
+  $("copyLink").addEventListener("click", async () => {
+    const link = shareLink();
+    try { history.replaceState(null, "", "#s=" + enc(getState())); } catch (e) { /* sandboxed frames may refuse */ }
+    $("linkOut").value = link; $("linkRow").hidden = false; $("csvRow").hidden = true;
+    let ok = false;
+    try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {
+      try { $("linkOut").select(); ok = document.execCommand("copy"); } catch (e2) { ok = false; }
+    }
+    say(ok ? "Link copied. Anyone who opens it sees these inputs." : "Copy the link below. Anyone who opens it sees these inputs.");
+    $("linkOut").select();
+  });
+
+  const csvCell = x => { const s = String(x == null ? "" : x); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const labelOf = el => { const lab = document.querySelector(`label[for="${el.id}"]`); if (!lab) return el.id; const c = lab.cloneNode(true); c.querySelectorAll("sup, .tag").forEach(s => s.remove()); return c.textContent.replace(/\s+/g, " ").trim(); };
+  const unitOf = el => { const u = el.closest(".unit-input"); return u && u.querySelector("span") ? u.querySelector("span").textContent : ""; };
+  function buildCSV() {
+    const rows = [["Ureteroscope carbon break-even calculator", `Version ${VERSION}`, VDATE, ""], ["Exported", new Date().toISOString(), "", ""], ["Shareable link", shareLink(), "", ""], [], ["Section", "Item", "Value", "Unit"]];
+    const P = readParams(), r = evaluate(P);
+    rows.push(["Inputs", "Scope footprint mode", mode === "build" ? "Build from components" : "Published values", ""]);
+    [...document.querySelectorAll("#view-episode input[id], #view-episode select[id]")].forEach(el => {
+      if (el.classList.contains("rng")) return;
+      if (mode === "build" && ["preset", "eSUp", "eRUp"].includes(el.id)) return;
+      if (mode === "pub" && el.closest("#build-panel")) return;
+      if (!P.travelOn && el.closest("#travel-fields")) return;
+      const val = el.tagName === "SELECT" ? el.options[el.selectedIndex].textContent : (el.type === "checkbox" ? (el.checked ? "yes" : "no") : el.value);
+      rows.push(["Inputs", labelOf(el), val, unitOf(el)]);
+    });
+    rows.push(["Results", "Verdict", $("headline").textContent, ""], ["Results", "Per use", $("percase").textContent, ""], ["Results", "Sign convention", "Signed numbers below: positive means single-use is lower", ""]);
+    rows.push(["Results", "Net per 100 patients (signed)", (r.net * 100).toFixed(2), "kg"]);
+    document.querySelectorAll("#tips li").forEach(li => rows.push(["Results", "What would change the answer", li.textContent.replace(/\s+/g, " ").trim(), ""]));
+    document.querySelectorAll(".results .stat").forEach(st => rows.push(["Results", st.querySelector(".k").textContent, st.querySelector(".v").textContent.replace(/\s+/g, " ").trim(), ""]));
+    r.comps.forEach(c => rows.push(["Failed-access episode", c.k, c.x.toFixed(3), "kg"]));
+    rows.push(["Failed-access episode", "Total", r.F.toFixed(3), "kg"]);
+    if (located() && lastUnc) {
+      const U = lastUnc;
+      rows.push(["Uncertainty", "Draws (triangular, seed " + SEED + ")", N_DRAWS, ""], ["Uncertainty", "Probability single-use is lower", (U.pSU * 100).toFixed(1), "%"], ["Uncertainty", "Median per 100 patients", U.med.toFixed(1), "kg"], ["Uncertainty", "5th percentile per 100 patients", U.p5.toFixed(1), "kg"], ["Uncertainty", "95th percentile per 100 patients", U.p95.toFixed(1), "kg"]);
+      rows.push([], ["Tornado", "Input", "Low / current / high", "Result per 100 patients at low / high (kg)"]);
+      U.torn.forEach(t => rows.push(["Tornado", t.a.row.l + " (" + t.a.row.u + ")", `${shown(t.a.lo)} / ${shown(t.a.base)} / ${shown(t.a.hi)}`, `${t.nLo.toFixed(1)} / ${t.nHi.toFixed(1)}`]));
+    }
+    const S = { su: invSide("su"), ru: invSide("ru") };
+    rows.push([], ["Device only", "Study", INV[invSel.value].name, ""]);
+    ["su", "ru"].forEach(side => { const d = S[side]; d.st.forEach((s, i) => rows.push(["Device only", `${side === "su" ? "Single-use" : "Reusable"} (${d.h}): ${s[0]}`, d.vals[i], "kg per use"])); rows.push(["Device only", `${side === "su" ? "Single-use" : "Reusable"} total`, d.total.toFixed(4), "kg per use"]); });
+    return rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+  }
+  // Inside the claude.ai viewer the save goes through its downloads capability; a self-hosted copy uses a plain download link
+  let dlNs;
+  if (window.claude && typeof window.claude.use === "function") dlNs = window.claude.use("downloads").catch(() => null);
+  $("dlCsv").addEventListener("click", async () => {
+    const csv = buildCSV(), name = `ureteroscope-calculator-v${VERSION}-${new Date().toISOString().slice(0, 10)}.csv`;
+    $("csvOut").value = csv; $("csvRow").hidden = false; $("linkRow").hidden = true;
+    const dl = dlNs ? await dlNs : null;
+    if (dl) {
+      try { await dl.save({ filename: name, data: csv }); say("CSV saved. The same text is below if you need it."); }
+      catch (e) { say(e && e.code === "declined" ? "Download cancelled. You can copy the text below into a .csv file instead." : "The download is not available here. Copy the text below into a .csv file."); }
+      return;
+    }
+    try {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      say("CSV downloaded. If your browser blocked the download, copy the text below into a .csv file.");
+    } catch (e) { say("Your browser blocked the download. Copy the text below into a .csv file."); }
+  });
+
+  // ---------- How to use: worked example and reset ----------
+  const EXAMPLE = { country: String(US), state: String(STATES.findIndex(g => g.n === "Ohio")), ci: "0.479", pRU: "8", pSU: "3" };
+  function exampleText() {
+    const g = over => readParams(id => (id in over ? over[id] : DEF.i[id]), "build");
+    const a = evaluate(g(EXAMPLE)), b = evaluate(g(Object.assign({}, EXAMPLE, { abort: "50" })));
+    const Fs = (a.eSU * (1 + a.pSU) - a.eRU * (1 + a.pRU)) / a.dp;
+    const res = x => x.net > 0 ? `single-use saves ${fmt(x.net, 2)} kg CO2e per care episode (${fmt(x.net * 100, 0)} kg per 100 patients)` : `reusable saves ${fmt(-x.net, 2)} kg CO2e per care episode (${fmt(-x.net * 100, 0)} kg per 100 patients)`;
+    return `Result: ${res(a)}. Reusable is ${fmt(a.eRU, 2)} kg per use on Ohio's grid against ${fmt(a.eSU, 2)} kg for single-use, and a failed access adds ${fmt(a.F)} kg, ${a.F > Fs ? "well above" : "below"} the ${fmt(Fs)} kg needed to break even. If the aborted first attempt used only half the OR time and anesthesia of a full case (aborted-attempt share 50%), a failed access adds ${fmt(b.F)} kg and ${res(b)}.`;
+  }
+  $("loadExample").addEventListener("click", () => { applyState({ v: VERSION, g: 2, i: EXAMPLE }); $("banner").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  $("resetAll").addEventListener("click", () => { applyState({}); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ } });
+  $("verLink").addEventListener("click", () => { $("changelog").open = true; });
+  $("howLink").addEventListener("click", () => { $("howto").open = true; });
+
+  // ---------- References ----------
+  // each default value carries a superscript; hovering, focusing or tapping it opens a pop-up with the link
+  const REFS = {
+    egrid: ["US EPA. Emissions & Generation Resource Integrated Database (eGRID2023), subregion output emission rates.", "https://www.epa.gov/egrid"],
+    countries: ["National grid averages compiled by the study team from the user-supplied data file; sources to be cited before publication.", ""],
+    thone: ["Thöne M, et al. Comparative analyses of the environmental and health impact of reusable and single-use flexible ureterorenoscopes. Urolithiasis. 2024;52:166.", "https://doi.org/10.1007/s00240-024-01664-2"],
+    davis: ["Davis NF, et al. Carbon footprint in flexible ureteroscopy: a comparative study on the environmental impact of reusable and single-use ureteroscopes. J Endourol. 2018;32(3):214–217.", "https://doi.org/10.1089/end.2018.0001"],
+    merlin: ["Merlin P, et al. Life cycle assessment of single-use versus reusable flexible ureteroscopes. J Endourol. 2025;39:1230–1237.", "https://doi.org/10.1177/08927790251387361"],
+    cetti: ["Cetti RJ, et al. Ann R Coll Surg Engl. 2011 (failed primary access about 8%).", "https://pmc.ncbi.nlm.nih.gov/articles/PMC3293268/"],
+    khan: ["Khan HS, et al. Pre-stenting in a difficult ureter: what is the incidence? Pak Armed Forces Med J. 2018 (7.9%).", "https://pafmj.org/PAFMJ/article/view/2334"],
+    morgan: ["Morgan K, et al. Predicting failed access in unstented ureteroscopy. Urolithiasis. 2023;51:41 (15.4%).", "https://doi.org/10.1007/s00240-023-01410-0"],
+    viers: ["Viers BR, et al. The difficult ureter: clinical and radiographic characteristics associated with upper urinary tract access at the time of ureteroscopic stone treatment. Urology. 2015;86:878–884 (16%).", "https://www.sciencedirect.com/science/article/abs/pii/S0090429515007566"],
+    ebner: ["Ebner B, et al. 6.3 Fr single-use flexible ureteroscope in primary ureteroscopy. Diagnostics. 2025;15(19):2522 (5.3%, 2 of 38).", "https://doi.org/10.3390/diagnostics15192522"],
+    hyp: ["Study hypothesis (about 5% failed access with conventional scopes vs about 1% with 6.3 Fr single-use scopes); not yet supported by a published series.", ""],
+    john: ["John JB, et al. The carbon footprint of the perioperative transurethral resection of bladder tumour pathway. BJU Int. 2024;134(2):268–281. Used to scale the OR session components.", "https://pmc.ncbi.nlm.nih.gov/articles/PMC11628940/"],
+    macneill: ["MacNeill AJ, et al. The impact of surgery on global climate: a carbon footprinting study of operating theatres in three health systems. Lancet Planet Health. 2017;1(9):e381–e388.", "https://doi.org/10.1016/S2542-5196(17)30162-6"],
+    asa: ["American Society of Anesthesiologists. Greening the operating room: inhaled anesthetics (car-mile equivalents per MAC-hour).", "https://www.asahq.org/about-asa/governance-and-committees/asa-committees/environmental-sustainability/greening-the-operating-room/inhaled-anesthetics"],
+    est: ["Study-team estimate. Replace with local data.", ""],
+    elliott: ["Elliott CS, et al. Unplanned emergency department visits and hospital admissions following ureteroscopy: do ureteral stents make a difference? Urology. 2018;117:44–49.", "https://www.sciencedirect.com/science/article/abs/pii/S0090429518302747"],
+    rocks: ["Michigan Urological Surgery Improvement Collaborative (MUSIC ROCKS): nearly 10% of ureteroscopy patients visit the emergency department within 30 days (Urology Times report).", "https://www.urologytimes.com/view/nearly-10-urs-patients-visit-emergency-room"],
+    carlos: ["Carlos EC, et al. J Urol. 2019;201(3):556–562 (12.6% ED return within 30 days).", "https://doi.org/10.1016/j.juro.2018.09.062"],
+    unplanned: ["Unplanned encounters common after ureteroscopy (Urology Times report; 14.6% ED visits, 5.1% readmissions).", "https://www.urologytimes.com/view/unplanned-encounters-common-after-ureteroscopy"],
+    inpatient: ["Environmental footprint of regular and intensive inpatient care in a large US hospital. Int J Life Cycle Assess. 2022 (about 45 kg CO2e per regular inpatient day).", "https://doi.org/10.1007/s11367-021-01998-8"],
+    epaveh: ["US EPA. Greenhouse gas emissions from a typical passenger vehicle (about 400 g CO2 per mile).", "https://www.epa.gov/greenvehicles/greenhouse-gas-emissions-typical-passenger-vehicle"],
+    team: ["Study-team value. Electric vehicle: grid carbon intensity × 0.30 kWh/mile × 1.10 charging inefficiency. Bus 0.150, train 0.050 and active transit 0 kg/mile.", ""]
+  };
+  const ORDER = ["thone", "davis", "merlin", "countries", "egrid", "cetti", "khan", "morgan", "viers", "ebner", "hyp", "john", "macneill", "asa", "est", "rocks", "elliott", "carlos", "unplanned", "inpatient", "epaveh", "team"];
+  const refNum = k => ORDER.indexOf(k) + 1;
+  $("refList").innerHTML = ORDER.map(k => `<li id="ref-${k}">${REFS[k][0]}${REFS[k][1] ? ` <a href="${REFS[k][1]}" target="_blank" rel="noopener">${REFS[k][1].replace(/^https?:\/\//, "")}</a>` : ""}</li>`).join("");
+  function paintRefs() {
+    document.querySelectorAll("sup.ref").forEach(el => {
+      const k = el.dataset.ref; if (!REFS[k]) return;
+      if (el.dataset.painted === k) return;
+      el.dataset.painted = k;
+      el.innerHTML = `<a href="#ref-${k}" aria-label="Reference ${refNum(k)}">${refNum(k)}</a>`;
+    });
+  }
+  const pop = document.createElement("div");
+  pop.className = "refpop"; pop.hidden = true; pop.setAttribute("role", "tooltip"); document.body.appendChild(pop);
+  let hideT;
+  function openPop(a) {
+    const k = a.closest("sup.ref").dataset.ref, [cite, url] = REFS[k];
+    clearTimeout(hideT);
+    pop.innerHTML = `<div>${refNum(k)}. ${cite}</div>` + (url ? `<a href="${url}" target="_blank" rel="noopener">Open source ↗</a>` : "");
+    pop.hidden = false;
+    const r = a.getBoundingClientRect(), pw = pop.offsetWidth;
+    const left = Math.min(Math.max(16, r.left + window.scrollX - 12), window.scrollX + document.documentElement.clientWidth - pw - 16);
+    pop.style.left = left + "px"; pop.style.top = (r.bottom + window.scrollY + 6) + "px";
+  }
+  const hideSoon = () => { hideT = setTimeout(() => { pop.hidden = true; }, 250); };
+  document.addEventListener("mouseover", e => { const a = e.target.closest("sup.ref a"); if (a) openPop(a); });
+  document.addEventListener("mouseout", e => { if (e.target.closest("sup.ref a")) hideSoon(); });
+  document.addEventListener("focusin", e => { const a = e.target.closest("sup.ref a"); if (a) openPop(a); });
+  document.addEventListener("click", e => {
+    const a = e.target.closest("sup.ref a");
+    if (a) { e.preventDefault(); openPop(a); return; }
+    if (!e.target.closest(".refpop") && !e.target.closest(".def")) pop.hidden = true;
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") pop.hidden = true; });
+  pop.addEventListener("mouseenter", () => clearTimeout(hideT));
+  pop.addEventListener("mouseleave", hideSoon);
+
+  // ---------- Source tags on every input, and the Advanced summary line ----------
+  const TAGS = { yours: "Your data", pub: "Published", hyp: "Study hypothesis", est: "Estimate" };
+  function tagFor(el) {
+    if (el.id === "state") return located() && sSel.value !== "avg" ? "yours" : null;
+    if (el.id === "country" || el.id === "ci") return located() ? "yours" : null;
+    if (el.id === "refInv" || el.id === "preset" || el.id === "tmode" || el.id === "travelOn") return null;
+    if (pubVal[el.id] != null && String(el.value) === String(pubVal[el.id])) return "pub";
+    if (INV_IDS.includes(el.id) && refInv.value !== "custom") return "pub";
+    if (el.id === "eSUp" || el.id === "eRUp") return sel.value === "custom" ? "yours" : "pub";
+    if (DEF && String(elVal(el)) !== String(DEF.i[el.id])) return "yours";
+    const sup = document.querySelector(`label[for="${el.id}"] sup.ref`);
+    if (!sup) return null;
+    const k = sup.dataset.ref;
+    return k === "hyp" ? "hyp" : (k === "est" || k === "team") ? "est" : "pub";
+  }
+  function paintTags() {
+    if (!DEF) return;
+    saveEls().concat([$("orFix")]).forEach(el => {
+      const lab = document.querySelector(`label[for="${el.id}"]`); if (!lab) return;
+      let t = lab.querySelector(".tag");
+      const k = el.id === "orFix" ? (OR_PARTS.some(([id]) => String($(id).value) !== String(DEF.i[id])) ? "yours" : "est") : tagFor(el);
+      if (!k) { if (t) t.remove(); return; }
+      if (!t) { t = document.createElement("span"); lab.appendChild(t); }
+      t.className = "tag " + k; t.textContent = TAGS[k];
+    });
+  }
+  function advSummary(r) {
+    const inv = mode === "pub" ? "Published totals" : (refInv.value === "custom" ? "Your own inventory" : refInv.value === "davis" ? "Davis 2018 inventory" : "Thöne 2024 inventory");
+    const n = DEF ? saveEls().filter(el => tagFor(el) === "yours" && !["country", "state", "ci", "pRU", "pSU"].includes(el.id)).length : 0;
+    $("advSum").textContent = `${inv} · single-use ${fmt(r.eSU, 2)} kg · failed access adds ${fmt(r.F)} kg` + (n ? ` · ${n} value${n > 1 ? "s" : ""} edited` : "");
+  }
+
+  const adv = $("adv");
+  const advLabel = () => { $("advCue").textContent = adv.open ? "Hide" : "Show"; };
+  adv.addEventListener("toggle", advLabel); advLabel();
+
+  // ---------- Plain-language definitions on hover ----------
+  const DEFS = {
+    crep: "Everything used to wash, disinfect, sterilize and repackage the scope other than the washer's and sterilizer's electricity: water, detergent and enzymatic cleaner, high-level disinfectant or hydrogen peroxide sterilant, the flushing syringe, staff PPE, sterilization pouches and wraps, and their disposal. Thöne's value is 1.76 kg per cycle (0.88 kg per scope, two scopes per cycle). Davis counted only repackaging, about 0.01 kg per cycle."
+  };
+  const DEF_TEXT = { crep: "Other reprocessing inputs per cycle" };
+  function wrapDefs(root) {
+    root.querySelectorAll("label, td, .tl").forEach(el => {
+      if (el.querySelector(".def")) return;
+      Object.entries(DEF_TEXT).forEach(([k, phrase]) => {
+        const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let n; while ((n = w.nextNode())) {
+          const i = n.nodeValue.indexOf(phrase); if (i < 0) continue;
+          const after = n.splitText(i); after.splitText(phrase.length);
+          const sp = document.createElement("span"); sp.className = "def"; sp.tabIndex = 0; sp.dataset.def = k; sp.textContent = phrase;
+          after.parentNode.replaceChild(sp, after); break;
+        }
+      });
+    });
+  }
+  function openDef(el) {
+    clearTimeout(hideT);
+    pop.innerHTML = `<div><strong>${DEF_TEXT[el.dataset.def]}</strong></div><div style="margin-top:4px">${DEFS[el.dataset.def]}</div>`;
+    pop.hidden = false;
+    const r = el.getBoundingClientRect(), pw = pop.offsetWidth;
+    pop.style.left = Math.min(Math.max(16, r.left + window.scrollX - 12), window.scrollX + document.documentElement.clientWidth - pw - 16) + "px";
+    pop.style.top = (r.bottom + window.scrollY + 6) + "px";
+  }
+  document.addEventListener("mouseover", e => { const d = e.target.closest(".def"); if (d) openDef(d); });
+  document.addEventListener("mouseout", e => { if (e.target.closest(".def")) hideSoon(); });
+  document.addEventListener("focusin", e => { const d = e.target.closest(".def"); if (d) openDef(d); });
+  document.addEventListener("click", e => { const d = e.target.closest(".def"); if (d) { e.preventDefault(); openDef(d); } }, true);
+  wrapDefs(document.body);
+  new MutationObserver(() => wrapDefs(document.body)).observe(document.body, { subtree: true, childList: true });
+
+  // ---------- Start ----------
+  presetNotes(); invRefs();
+  DEF = { i: Object.fromEntries(saveEls().map(el => [el.id, elVal(el)])) };
+  $("exResult").textContent = exampleText();
+  let start = null;
+  try { const m = location.hash.match(/s=([^&]+)/); if (m) start = dec(m[1]); } catch (e) { start = null; }
+  if (start) applyState(start); else { calc(); renderInv(); }
+  paintRefs();
+  new MutationObserver(paintRefs).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-ref"] });
+})();
+</script>
